@@ -1,7 +1,7 @@
 import os
 
-from board_new import Board
-from bot_new import Bot
+from board import Board
+from bot import Bot
 
 board = Board()
 bot = Bot(board)

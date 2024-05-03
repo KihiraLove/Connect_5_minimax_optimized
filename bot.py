@@ -1,4 +1,4 @@
-from board_new import Board
+from board import Board
 
 
 class Bot:
