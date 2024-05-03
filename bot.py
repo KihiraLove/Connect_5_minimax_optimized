@@ -73,7 +73,10 @@ class Bot:
                     removable_chains.append(index)
         removable_chains = sorted(removable_chains, reverse=True)
         for index in removable_chains:
-            del self.x_index_chains[index] if is_player_x else self.o_index_chains[index]
+            if is_player_x:
+                del self.x_index_chains[index]
+            else:
+                del self.o_index_chains[index]
 
     def check_for_open_chains(self, length):
         pass
