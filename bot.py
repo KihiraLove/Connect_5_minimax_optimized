@@ -1,6 +1,3 @@
-from board import Board
-
-
 class Bot:
     # TODO: Track open 3 and 4 long chains
     # TODO: Hardcore win condition
@@ -32,7 +29,7 @@ class Bot:
             for neighbour in matches:
                 self.add_index_to_chain(index, neighbour, is_player_x)
         opponent = not is_player_x
-        opponent_matches = self.board.get_neighbours(index,opponent)
+        opponent_matches = self.board.get_neighbours(index, opponent)
         for neighbour in opponent_matches:
             self.vet_closed_chains(index, neighbour, opponent)
 
@@ -43,8 +40,8 @@ class Bot:
             # TODO: calculate endpoints instead of directionality
             if neighbour not in index_chain:
                 continue
-
-
+            if len(index_chain) == 1:
+                pass
 
     def add_index_to_chain(self, index, neighbour, is_player_x):
         direction = index - neighbour
