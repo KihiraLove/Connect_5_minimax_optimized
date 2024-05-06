@@ -4,6 +4,9 @@ class Bot:
     # TODO: Block opponent 4 chains open from one side, 3 chains open from both sides
     # TODO: Cache subtree
     # TODO: Discard blocked chains from index chains
+    # TODO: clean up directionality
+    # TODO: Check all direction calculations for wrong calculations
+    # TODO: switch set[i] operations to list(set)[i] operations
 
     def __init__(self, board):
         self.board = board
@@ -33,18 +36,39 @@ class Bot:
         for neighbour in opponent_matches:
             self.vet_closed_chains(index, neighbour, opponent)
 
-    def vet_closed_chains(self, index, neighbour, is_player_x):
-        direction = index - neighbour
+    def vet_closed_chains(self, index, neighbour, is_opponent_x):
+        deletable_indexes = []
         # Check the opponents chains
-        for i, index_chain in enumerate(self.x_index_chains) if is_player_x else enumerate(self.o_index_chains):
-            # TODO: calculate endpoints instead of directionality
-            if neighbour not in index_chain:
+        for i, index_chain in enumerate(self.x_index_chains if is_opponent_x else self.o_index_chains):
+            if neighbour not in index_chain or len(index_chain) == 1:
+                # TODO: check for 1 chains blocked from all sides
                 continue
-            if len(index_chain) == 1:
-                pass
+            chain = list(index_chain)
+            chain_direction = abs(chain[1] - chain[0])
+            negative_closing_index = chain[0] - chain_direction
+            positive_closing_index = chain[-1] + chain_direction
+            if negative_closing_index != index and positive_closing_index != index:
+                continue
+
+            negative_match = negative_closing_index == index
+            positive_match = positive_closing_index == index
+            negative_in_chain = negative_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
+            positive_in_chain = positive_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
+            if (negative_match and positive_in_chain) or (positive_match and negative_in_chain):
+                deletable_indexes.append(i)
+
+        if len(deletable_indexes) > 0:
+            deletable_indexes = sorted(deletable_indexes, reverse=True)
+            for i in deletable_indexes:
+                if is_opponent_x:
+                    del self.x_index_chains[index]
+                else:
+                    del self.o_index_chains[index]
 
     def add_index_to_chain(self, index, neighbour, is_player_x):
-        direction = index - neighbour
+        # TODO: create new chain for index neighbouring a chain
+        # TODO: rewrite this garbage
+        direction = abs(index - neighbour)
         changed_chains_index_direction = []
         for i, index_chain in enumerate(self.x_index_chains) if is_player_x else enumerate(self.o_index_chains):
             if neighbour not in index_chain:
@@ -53,12 +77,11 @@ class Bot:
                 index_chain.add(index)
                 changed_chains_index_direction.append((i, index - neighbour, neighbour - index))
                 continue
-            sorted_chain = sorted(index_chain)
-            chain_positive_direction = sorted_chain[1] - sorted_chain[0]
-            chain_negative_direction = sorted_chain[0] - sorted_chain[1]
-            if direction == chain_negative_direction or direction == chain_positive_direction:
+            sorted_chain = list(index_chain)
+            chain_direction = abs(sorted_chain[0] - sorted_chain[1])
+            if direction == chain_direction:
                 index_chain.add(index)
-                changed_chains_index_direction.append((i, chain_positive_direction, chain_negative_direction))
+                changed_chains_index_direction.append((i, chain_direction))
 
         if len(changed_chains_index_direction) > 1:
             self.check_for_overlap(changed_chains_index_direction, is_player_x)
@@ -66,9 +89,9 @@ class Bot:
     def check_for_overlap(self, changed_chains, is_player_x):
         removable_chains = []
         while len(changed_chains) != 0:
-            chain_index, negative_direction, positive_direction = changed_chains.pop()
-            for index, direction, _ in changed_chains:
-                if direction == positive_direction and direction == negative_direction:
+            chain_index, chain_direction = changed_chains.pop()
+            for index, direction in changed_chains:
+                if direction == chain_direction:
                     self.x_index_chains[chain_index].update(self.x_index_chains[index]) if is_player_x else self.o_index_chains[chain_index].update(self.o_index_chains[index])
                     removable_chains.append(index)
         removable_chains = sorted(removable_chains, reverse=True)
