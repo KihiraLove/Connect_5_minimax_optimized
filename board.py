@@ -135,28 +135,27 @@ class Board:
             return False
         # Horizontal connection between neighbours and last move
         if (index - 1) in matches or (index + 1) in matches:
-            if self.check_for_chain(chain_length, -1, 1, index, is_player_x):
+            if self.check_for_chain(chain_length, 1, index, is_player_x):
                 return True
         # Vertical connection between neighbours and last move
         elif (index - self.size) in matches or (index + self.size) in matches:
-            if self.check_for_chain(chain_length, -self.size, self.size, index, is_player_x):
+            if self.check_for_chain(chain_length, self.size, index, is_player_x):
                 return True
         # Left upper right lower connection between neighbours and last move
         elif (index - self.size - 1) in matches or (index + self.size + 1) in matches:
-            if self.check_for_chain(chain_length, -self.size - 1, self.size + 1, index, is_player_x):
+            if self.check_for_chain(chain_length, self.size + 1, index, is_player_x):
                 return True
         # Left lower right upper connection between neighbours and last move
         elif (index - self.size + 1) in matches or (index + self.size - 1) in matches:
-            if self.check_for_chain(chain_length, -self.size + 1, self.size - 1, index, is_player_x):
+            if self.check_for_chain(chain_length, self.size - 1, index, is_player_x):
                 return True
         return False
 
-    def check_for_chain(self, chain_length, negative_direction, positive_direction, index, is_player_x):
+    def check_for_chain(self, chain_length, direction, index, is_player_x):
         """
         Checks if there is a chain of past moves with the last move for the current player that can lead to a win
         :param chain_length: the length of the searched chain
-        :param negative_direction: negative direction of the chain
-        :param positive_direction: positive direction of the chain
+        :param direction: direction of the chain
         :param index: index of the last move
         :param is_player_x: is the current player X
         :return: Boolean indicating that there is a chain of moves for the current player
@@ -174,7 +173,7 @@ class Board:
             if directions_checked == 2:
                 break
             # Calculate the neighbour in the currently checked direction
-            neighbour = checked + positive_direction if direction_is_positive else checked + negative_direction
+            neighbour = checked + direction if direction_is_positive else checked - direction
             # If the neighbour is invalid or not contained in the current players past move indexes reverse direction
             # and start checking from the original index
             if self.neighbour_breaks_rule(neighbour, checked) or (
@@ -211,7 +210,9 @@ class Board:
         :return: set containing all the indexes that are mathematically neighbours of the current index
         """
         # Add all neighbours into a set
-        mathematical_neighbours = {index - 1, index + 1, index - self.size, index - self.size - 1, index - self.size + 1, index + self.size, index + self.size - 1, index + self.size + 1}
+        mathematical_neighbours = {index - self.size - 1, index - self.size, index - self.size + 1,
+                                    index - 1, index + 1 ,
+                                    index + self.size - 1, index + self.size, index + self.size + 1}
         return sorted(mathematical_neighbours)
 
     def vet_neighbouring_indexes(self, neighbours, index):
