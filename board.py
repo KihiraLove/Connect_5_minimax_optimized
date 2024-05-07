@@ -1,4 +1,6 @@
 class Board:
+    # TODO: recheck all ternary operators
+    # TODO: Unit test this class
     def __init__(self):
         """
         Define a board for the 5 steps game
@@ -107,7 +109,10 @@ class Board:
         :param is_player_x: is the player X
         :return: Boolean indicating if the index is in the players index set
         """
-        return index in self.x_indexes if is_player_x else index in self.o_indexes
+        if is_player_x:
+            return index in self.x_indexes
+        else:
+            return index in self.o_indexes
 
     def get_neighbours(self, index, is_player_x):
         """

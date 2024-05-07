@@ -20,8 +20,8 @@ while not win:
             last_move = (x, y)
             win, enlarged = board.move(x, y, isPlayerX)
         else:
-            win = bot.smart_move(last_move, enlarged)
-
+            move = bot.smart_move(last_move, enlarged)
+            win, enlarged = board.move(move[0], move[1], isPlayerX)
         isPlayerX = not isPlayerX
     except IndexError:
         print("Invalid move")

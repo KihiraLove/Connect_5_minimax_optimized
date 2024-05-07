@@ -1,9 +1,11 @@
+import random
+
+
 class Bot:
     # TODO: Track open 3 and 4 long chains
     # TODO: Hardcore win condition
     # TODO: Block opponent 4 chains open from one side, 3 chains open from both sides
     # TODO: Cache subtree
-    # TODO: Discard blocked chains from index chains
     # TODO: clean up directionality
     # TODO: Check all direction calculations for wrong calculations
     # TODO: switch set[i] operations to list(set)[i] operations
@@ -27,7 +29,7 @@ class Bot:
         index = self.board.calculate_index_from_position(move[0], move[1])
         matches = self.board.get_neighbours(index, is_player_x)
         if len(self.x_index_chains if is_player_x else self.o_index_chains) == 0 or len(matches) == 0:
-            self.x_index_chains.append(set(index)) if is_player_x else self.o_index_chains.append(set(index))
+            self.x_index_chains.append({index}) if is_player_x else self.o_index_chains.append({index})
         else:
             for neighbour in matches:
                 self.add_index_to_chain(index, neighbour, is_player_x)
@@ -40,8 +42,12 @@ class Bot:
         deletable_indexes = []
         # Check the opponents chains
         for i, index_chain in enumerate(self.x_index_chains if is_opponent_x else self.o_index_chains):
-            if neighbour not in index_chain or len(index_chain) == 1:
-                # TODO: check for 1 chains blocked from all sides
+            if len(index_chain) == 1:
+                neighbours = self.board.calculate_true_neighbouring_indexes(index)
+                neighbour_count = len(neighbours)
+                if neighbour_count == len(self.board.x_indexes.intersection(neighbours) if is_opponent_x else self.board.o_indexes.intersection(neighbours)):
+                    deletable_indexes.append(i)
+            if neighbour not in index_chain:
                 continue
             chain = list(index_chain)
             chain_direction = abs(chain[1] - chain[0])
@@ -58,30 +64,29 @@ class Bot:
                 deletable_indexes.append(i)
 
         if len(deletable_indexes) > 0:
-            deletable_indexes = sorted(deletable_indexes, reverse=True)
-            for i in deletable_indexes:
-                if is_opponent_x:
-                    del self.x_index_chains[index]
-                else:
-                    del self.o_index_chains[index]
+            self.delete_indexes_from_chain(sorted(deletable_indexes, reverse=True), is_opponent_x)
 
     def add_index_to_chain(self, index, neighbour, is_player_x):
-        # TODO: create new chain for index neighbouring a chain
         # TODO: rewrite this garbage
         direction = abs(index - neighbour)
         changed_chains_index_direction = []
+        hit = False
         for i, index_chain in enumerate(self.x_index_chains) if is_player_x else enumerate(self.o_index_chains):
             if neighbour not in index_chain:
                 continue
+            hit = True
             if len(index_chain) == 1:
                 index_chain.add(index)
-                changed_chains_index_direction.append((i, index - neighbour, neighbour - index))
+                changed_chains_index_direction.append((i, abs(index - neighbour)))
                 continue
             sorted_chain = list(index_chain)
             chain_direction = abs(sorted_chain[0] - sorted_chain[1])
             if direction == chain_direction:
                 index_chain.add(index)
                 changed_chains_index_direction.append((i, chain_direction))
+        # Create a new chain and add it to the list is we form a new chain with an index from al already existing chain
+        if hit:
+            self.x_index_chains.append({index, neighbour}) if is_player_x else self.o_index_chains.append({index, neighbour})
 
         if len(changed_chains_index_direction) > 1:
             self.check_for_overlap(changed_chains_index_direction, is_player_x)
@@ -94,8 +99,10 @@ class Bot:
                 if direction == chain_direction:
                     self.x_index_chains[chain_index].update(self.x_index_chains[index]) if is_player_x else self.o_index_chains[chain_index].update(self.o_index_chains[index])
                     removable_chains.append(index)
-        removable_chains = sorted(removable_chains, reverse=True)
-        for index in removable_chains:
+        self.delete_indexes_from_chain(sorted(removable_chains, reverse=True), is_player_x)
+
+    def delete_indexes_from_chain(self, indexes, is_player_x):
+        for index in indexes:
             if is_player_x:
                 del self.x_index_chains[index]
             else:
@@ -109,6 +116,6 @@ class Bot:
             self.recalculate_chains()
         self.add_last_move(last_move, True)
         # TODO: make bot chose move
-        move = last_move
+        move = [random.randint(0, 20), random.randint(0, 20)]
         self.add_last_move(move, False)
-        pass
+        return move
