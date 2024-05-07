@@ -70,11 +70,9 @@ class Bot:
         # TODO: rewrite this garbage
         direction = abs(index - neighbour)
         changed_chains_index_direction = []
-        hit = False
         for i, index_chain in enumerate(self.x_index_chains) if is_player_x else enumerate(self.o_index_chains):
             if neighbour not in index_chain:
                 continue
-            hit = True
             if len(index_chain) == 1:
                 index_chain.add(index)
                 changed_chains_index_direction.append((i, abs(index - neighbour)))
@@ -84,9 +82,9 @@ class Bot:
             if direction == chain_direction:
                 index_chain.add(index)
                 changed_chains_index_direction.append((i, chain_direction))
-        # Create a new chain and add it to the list is we form a new chain with an index from al already existing chain
-        if hit:
-            self.x_index_chains.append({index, neighbour}) if is_player_x else self.o_index_chains.append({index, neighbour})
+            else:
+                # Create a new chain and add it to the list is we form a new chain with an index from al already existing chain
+                self.x_index_chains.append({index, neighbour}) if is_player_x else self.o_index_chains.append({index, neighbour})
 
         if len(changed_chains_index_direction) > 1:
             self.check_for_overlap(changed_chains_index_direction, is_player_x)
@@ -115,7 +113,25 @@ class Bot:
         if enlarged:
             self.recalculate_chains()
         self.add_last_move(last_move, True)
+        print("##############")
+        print("x indexes")
+        print(self.board.x_indexes)
+        print("o indexes")
+        print(self.board.o_indexes)
+        print("x chains")
+        print(self.x_index_chains)
+        print("o chains")
+        print(self.o_index_chains)
         # TODO: make bot chose move
-        move = [random.randint(0, 20), random.randint(0, 20)]
+        move = [random.randint(1, 20), random.randint(1, 20)]
         self.add_last_move(move, False)
+        print("##############")
+        print("x indexes")
+        print(self.board.x_indexes)
+        print("o indexes")
+        print(self.board.o_indexes)
+        print("x chains")
+        print(self.x_index_chains)
+        print("o chains")
+        print(self.o_index_chains)
         return move

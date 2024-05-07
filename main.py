@@ -10,7 +10,6 @@ isPlayerX = True
 enlarged = False
 last_move = ()
 while not win:
-    os.system('cls' if os.name == 'nt' else 'clear')
     board.print_board()
     try:
         if isPlayerX:
