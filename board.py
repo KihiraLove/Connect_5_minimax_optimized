@@ -1,5 +1,4 @@
 class Board:
-    # TODO: recheck all ternary operators
     # TODO: Unit test this class
     def __init__(self):
         """
@@ -90,7 +89,7 @@ class Board:
         """
         index = self.calculate_index_from_position(x, y)
         # Move is invalid if the index of the move is already occupied or the move is out of bounds by more than 1
-        if self.is_index_occupied(index) or x > self.size + 1 or y > self.size + 1:
+        if self.is_index_occupied(index) or x > self.size + 1 or y > self.size + 1 or x < 1 or y < 1:
             return False
         return True
 

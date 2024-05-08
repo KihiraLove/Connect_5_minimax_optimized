@@ -1,5 +1,3 @@
-import os
-
 from board import Board
 from bot import Bot
 
