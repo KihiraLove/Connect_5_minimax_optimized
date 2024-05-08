@@ -1,7 +1,39 @@
 import unittest
 
 from Connect_5_minimax_optimized.board import Board
+from Connect_5_minimax_optimized.bot import Bot
 
+
+class TestBot(unittest.TestCase):
+    def setUp(self):
+        self.board = Board()
+        self.bot = Bot(self.board)
+
+    def test_init(self):
+        self.assertEqual(self.bot.board, self.board)
+        self.assertEqual(self.bot.x_index_chains, [])
+        self.assertEqual(self.bot.o_index_chains, [])
+
+    def test_recalculate_chains(self):
+        pass
+
+    def test_add_last_move(self):
+        pass
+
+    def test_vet_closed_chains(self):
+        pass
+
+    def test_add_index_to_chain(self):
+        pass
+
+    def test_check_for_overlap(self):
+        pass
+
+    def test_delete_indexes_from_chain(self):
+        pass
+
+    def test_smart_move(self):
+        pass
 
 class TestBoard(unittest.TestCase):
 
