@@ -121,7 +121,7 @@ class Board:
         :return: All the neighbours of the index for the current player
         """
         neighbours = self.calculate_true_neighbouring_indexes(index)
-        # Check if the valid neighbours of teh last move are among the current players move indexes
+        # Check if the valid neighbours of the last move are among the current players move indexes
         return self.x_indexes.intersection(neighbours) if is_player_x else self.o_indexes.intersection(neighbours)
 
     def check_for_win(self, x, y, is_player_x, chain_length=5):
@@ -135,23 +135,27 @@ class Board:
         """
         index = self.calculate_index_from_position(x, y)
         matches = self.get_neighbours(index, is_player_x)
+        horizontal_direction = 1
+        vertical_direction = self.size
+        diagonal_up_down = self.size + 1
+        diagonal_down_up = self.size - 1
         if len(matches) == 0:
             return False
         # Horizontal connection between neighbours and last move
-        if (index - 1) in matches or (index + 1) in matches:
-            if self.check_for_chain(chain_length, 1, index, is_player_x):
+        if (index - horizontal_direction) in matches or (index + horizontal_direction) in matches:
+            if self.check_for_chain(chain_length, horizontal_direction, index, is_player_x):
                 return True
         # Vertical connection between neighbours and last move
-        elif (index - self.size) in matches or (index + self.size) in matches:
-            if self.check_for_chain(chain_length, self.size, index, is_player_x):
+        elif (index - vertical_direction) in matches or (index + vertical_direction) in matches:
+            if self.check_for_chain(chain_length, vertical_direction, index, is_player_x):
                 return True
         # Left upper right lower connection between neighbours and last move
-        elif (index - self.size - 1) in matches or (index + self.size + 1) in matches:
-            if self.check_for_chain(chain_length, self.size + 1, index, is_player_x):
+        elif (index - diagonal_up_down) in matches or (index + diagonal_up_down) in matches:
+            if self.check_for_chain(chain_length, diagonal_up_down, index, is_player_x):
                 return True
         # Left lower right upper connection between neighbours and last move
-        elif (index - self.size + 1) in matches or (index + self.size - 1) in matches:
-            if self.check_for_chain(chain_length, self.size - 1, index, is_player_x):
+        elif (index - diagonal_down_up) in matches or (index + diagonal_down_up) in matches:
+            if self.check_for_chain(chain_length, diagonal_down_up, index, is_player_x):
                 return True
         return False
 

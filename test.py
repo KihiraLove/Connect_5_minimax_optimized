@@ -72,7 +72,6 @@ class TestBoard(unittest.TestCase):
         self.assertEqual(self.board.x_indexes, shifted_indexes)
 
     def test_is_position_valid_empty(self):
-        player_x = True
         x = [1, 1, 20, 20]
         y = [1, 20, 1, 20]
         for i in range(len(x)):
@@ -109,3 +108,102 @@ class TestBoard(unittest.TestCase):
             self.board.o_indexes.add(i)
         for i in x_indexes.union(o_indexes):
             self.assertTrue(self.board.is_index_occupied(i))
+
+    def test_is_index_in_indexes_for_player(self):
+        x_index = 0
+        o_index = 1
+        player_x = True
+        player_o = False
+
+        self.assertFalse(self.board.is_index_in_indexes_for_player(x_index, player_x))
+        self.assertFalse(self.board.is_index_in_indexes_for_player(o_index, player_o))
+
+        self.board.x_indexes.add(x_index)
+        self.board.o_indexes.add(o_index)
+        self.assertTrue(self.board.is_index_in_indexes_for_player(x_index, player_x))
+        self.assertTrue(self.board.is_index_in_indexes_for_player(o_index, player_o))
+
+    def test_get_neighbours(self):
+        neighbours = {1, 20, 21, 379, 398, 378, 18, 38, 39, 360, 361, 381}
+        indexes = {0, 19, 380, 399}
+        player_x = True
+        player_o = False
+        for neighbour in neighbours:
+            self.board.x_indexes.add(neighbour)
+            self.board.o_indexes.add(neighbour)
+        self.assertEqual({1, 20, 21}, self.board.get_neighbours(0, player_x))
+        self.assertEqual({18, 38, 39}, self.board.get_neighbours(19, player_x))
+        self.assertEqual({360, 361, 381}, self.board.get_neighbours(380, player_x))
+        self.assertEqual({379, 398, 378}, self.board.get_neighbours(399, player_x))
+        self.assertEqual({1, 20, 21}, self.board.get_neighbours(0, player_o))
+        self.assertEqual({18, 38, 39}, self.board.get_neighbours(19, player_o))
+        self.assertEqual({360, 361, 381}, self.board.get_neighbours(380, player_o))
+        self.assertEqual({379, 398, 378}, self.board.get_neighbours(399, player_o))
+
+    def test_move(self):
+        x = [1, 21]
+        y = [1, 21]
+        player_x = True
+        self.assertFalse(self.board.move(x[0], y[0], player_x)[1])
+        with self.assertRaises(IndexError):
+            self.board.move(x[0], y[0], player_x)
+        self.assertTrue(self.board.move(x[1], y[1], player_x)[1])
+
+    def test_check_for_win_horizontal(self):
+        player_x = True
+        chain = {1, 2, 3, 4}
+        x = [1, 1, 1]
+        y = [1, 3, 5]
+        index = 0
+        for i in chain:
+            self.board.x_indexes.add(i)
+
+        self.assertFalse(self.board.check_for_win(1, 2, player_x))
+        self.board.x_indexes.add(index)
+        for i in range(len(x)):
+            self.assertTrue(self.board.check_for_win(x[i], y[i], player_x))
+
+    def test_check_for_win_vertical(self):
+        player_x = True
+        chain = {20, 40, 60, 80}
+        x = [1, 3, 5]
+        y = [1, 1, 1]
+        index = 0
+        for i in chain:
+            self.board.x_indexes.add(i)
+
+        self.assertFalse(self.board.check_for_win(2, 1, player_x))
+        self.board.x_indexes.add(index)
+        for i in range(len(x)):
+            self.assertTrue(self.board.check_for_win(x[i], y[i], player_x))
+
+    def test_check_for_win_diagonal_up_down(self):
+        player_x = True
+        chain = {21, 42, 63, 84}
+        x = [1, 3, 5]
+        y = [1, 3, 5]
+        index = 0
+        for i in chain:
+            self.board.x_indexes.add(i)
+
+        self.assertFalse(self.board.check_for_win(2, 2, player_x))
+        self.board.x_indexes.add(index)
+        for i in range(len(x)):
+            self.assertTrue(self.board.check_for_win(x[i], y[i], player_x))
+
+    def test_check_for_win_diagonal_down_up(self):
+        player_x = True
+        chain = {61, 42, 23, 4}
+        x = [5, 3, 1]
+        y = [1, 3, 5]
+        index = 80
+        for i in chain:
+            self.board.x_indexes.add(i)
+
+        self.assertFalse(self.board.check_for_win(4, 2, player_x))
+        self.board.x_indexes.add(index)
+        for i in range(len(x)):
+            self.assertTrue(self.board.check_for_win(x[i], y[i], player_x))
+
+    def test_print_board(self):
+        self.board.print_board()
