@@ -22,5 +22,3 @@ while not win:
         isPlayerX = not isPlayerX
     except IndexError:
         print("Invalid move")
-
-
