@@ -35,6 +35,7 @@ class TestBot(unittest.TestCase):
     def test_smart_move(self):
         pass
 
+
 class TestBoard(unittest.TestCase):
 
     def setUp(self):
