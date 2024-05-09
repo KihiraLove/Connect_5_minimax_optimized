@@ -6,9 +6,6 @@ class Bot:
     # TODO: Hardcore win condition
     # TODO: Block opponent 4 chains open from one side, 3 chains open from both sides
     # TODO: Cache subtree
-    # TODO: clean up directionality
-    # TODO: Check all direction calculations for wrong calculations
-    # TODO: switch set[i] operations to list(set)[i] operations
 
     def __init__(self, board):
         self.board = board
@@ -25,7 +22,7 @@ class Bot:
     def recalculate_chain(self, is_player_x):
         """
         Recalculate a specific chain after enlargement
-        :param is_player_x: boolean indicating if the player is X
+        :param is_player_x: boolean indicating whether the player is X or not
         """
         for index_chain in self.x_index_chains if is_player_x else self.o_index_chains:
             new_index_chain = self.board.shift_indexes(index_chain)
@@ -36,12 +33,12 @@ class Bot:
         """
         Add the last move to the cache
         :param move: (x, y) tuple containing the coordinates of the last move
-        :param is_player_x: boolean indicating if the player is X
+        :param is_player_x: boolean indicating whether the player is X or not
         """
         index = self.board.calculate_index_from_position(move[0], move[1])
         matches = self.board.get_neighbours(index, is_player_x)
         if len(self.x_index_chains if is_player_x else self.o_index_chains) == 0 or len(matches) == 0:
-            self.x_index_chains.append({index}) if is_player_x else self.o_index_chains.append({index})
+            self.add_new_chain({index}, is_player_x)
         else:
             for neighbour in matches:
                 self.add_index_to_chain(index, neighbour, is_player_x)
@@ -51,6 +48,12 @@ class Bot:
             self.vet_closed_chains(index, neighbour, opponent)
 
     def vet_closed_chains(self, index, neighbour, is_opponent_x):
+        """
+        Check if any of the opponents chains were closed by the last move, remove closed chains from the cache
+        :param index: index of the last move
+        :param neighbour: neighbouring index of the last move
+        :param is_opponent_x: boolean indicating whether the opponent is X
+        """
         deletable_indexes = []
         # Check the opponents chains
         for i, index_chain in enumerate(self.x_index_chains if is_opponent_x else self.o_index_chains):
@@ -62,7 +65,7 @@ class Bot:
             if neighbour not in index_chain:
                 continue
             chain = list(index_chain)
-            chain_direction = abs(chain[1] - chain[0])
+            chain_direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - chain_direction
             positive_closing_index = chain[-1] + chain_direction
             if negative_closing_index != index and positive_closing_index != index:
@@ -76,47 +79,99 @@ class Bot:
                 deletable_indexes.append(i)
 
         if len(deletable_indexes) > 0:
-            self.delete_indexes_from_chain(sorted(deletable_indexes, reverse=True), is_opponent_x)
+            self.delete_indexes_from_chain(deletable_indexes, is_opponent_x)
 
     def add_index_to_chain(self, index, neighbour, is_player_x):
-        # TODO: rewrite this garbage
-        direction = abs(index - neighbour)
+        """
+        Add an index of a move to chains that contain neighbour
+        :param index: index of the move to be added
+        :param neighbour: index neighbouring the index parameter
+        :param is_player_x: boolean indicating whether the player is X or not
+        """
+        direction = self.calculate_direction_of_neighbours(index, neighbour)
         changed_chains_index_direction = []
         for i, index_chain in enumerate(self.x_index_chains) if is_player_x else enumerate(self.o_index_chains):
             if neighbour not in index_chain:
                 continue
             if len(index_chain) == 1:
                 index_chain.add(index)
-                changed_chains_index_direction.append((i, abs(index - neighbour)))
+                changed_chains_index_direction.append((i, direction))
                 continue
             sorted_chain = list(index_chain)
-            chain_direction = abs(sorted_chain[0] - sorted_chain[1])
+            chain_direction = self.calculate_direction_of_neighbours(sorted_chain[0], sorted_chain[1])
             if direction == chain_direction:
                 index_chain.add(index)
-                changed_chains_index_direction.append((i, chain_direction))
+                changed_chains_index_direction.append((i, direction))
             else:
-                # Create a new chain and add it to the list is we form a new chain with an index from al already existing chain
-                self.x_index_chains.append({index, neighbour}) if is_player_x else self.o_index_chains.append({index, neighbour})
+                # Create a new chain and add it to the list, if we form a new chain
+                # with an index, from all already existing chain
+                self.add_new_chain({index, neighbour}, is_player_x)
 
         if len(changed_chains_index_direction) > 1:
             self.check_for_overlap(changed_chains_index_direction, is_player_x)
 
     def check_for_overlap(self, changed_chains, is_player_x):
+        """
+        Checks the chains that were chained by the last move in case they overlap
+        in case of overlap the function merges the two chains into one
+        :param changed_chains: tuple containing the index of the chain in the list of chains
+                                and the direction of the chain
+        :param is_player_x: boolean indicating whether the player is X or not
+        """
         removable_chains = []
         while len(changed_chains) != 0:
             chain_index, chain_direction = changed_chains.pop()
             for index, direction in changed_chains:
                 if direction == chain_direction:
-                    self.x_index_chains[chain_index].update(self.x_index_chains[index]) if is_player_x else self.o_index_chains[chain_index].update(self.o_index_chains[index])
+                    self.merge_chains(chain_index, index, is_player_x)
                     removable_chains.append(index)
-        self.delete_indexes_from_chain(sorted(removable_chains, reverse=True), is_player_x)
+        self.delete_indexes_from_chain(removable_chains, is_player_x)
+
+    def merge_chains(self, index_to_merge_to, index_to_merge, is_player_x):
+        """
+        Merge to index chains together by their indexes in the list of chains
+        :param index_to_merge_to: index in the list of the chain to merge into
+        :param index_to_merge: index in the list of the chain to merge
+        :param is_player_x: boolean indicating whether the player is X or not
+        """
+        if is_player_x:
+            self.x_index_chains[index_to_merge_to].update(self.x_index_chains[index_to_merge])
+        else:
+            self.o_index_chains[index_to_merge_to].update(self.o_index_chains[index_to_merge])
+
+    def add_new_chain(self, chain, is_player_x):
+        """
+        Add new chain to the list of chains for player
+        :param chain: chain to be added to list
+        :param is_player_x: boolean indicating whether the player is X or not
+        """
+        if is_player_x:
+            self.x_index_chains.append(chain)
+        else:
+            self.o_index_chains.append(chain)
 
     def delete_indexes_from_chain(self, indexes, is_player_x):
+        """
+        Delete chains from players index chains by their indexes
+        :param indexes: list of indexes of the chains to be deleted
+        :param is_player_x: boolean indicating whether the player is X or not
+        """
+        # Reverse sort the indexes, so we don't have to shift them
+        indexes = sorted(indexes, reverse=True)
         for index in indexes:
             if is_player_x:
                 del self.x_index_chains[index]
             else:
                 del self.o_index_chains[index]
+
+    def calculate_direction_of_neighbours(self, index, neighbour):
+        """
+        Calculate the direction of a chain from neighbouring indexes
+        :param index: index of a move
+        :param neighbour: index of a move neighbouring the index parameter
+        :return: returns direction
+        """
+        return abs(index - neighbour)
 
     def check_for_open_chains(self, length):
         pass
@@ -125,25 +180,7 @@ class Bot:
         if enlarged:
             self.recalculate_chains()
         self.add_last_move(last_move, True)
-        print("##############")
-        print("x indexes")
-        print(self.board.x_indexes)
-        print("o indexes")
-        print(self.board.o_indexes)
-        print("x chains")
-        print(self.x_index_chains)
-        print("o chains")
-        print(self.o_index_chains)
         # TODO: make bot chose move
         move = [random.randint(1, 20), random.randint(1, 20)]
         self.add_last_move(move, False)
-        print("##############")
-        print("x indexes")
-        print(self.board.x_indexes)
-        print("o indexes")
-        print(self.board.o_indexes)
-        print("x chains")
-        print(self.x_index_chains)
-        print("o chains")
-        print(self.o_index_chains)
         return move

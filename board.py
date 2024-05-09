@@ -57,7 +57,7 @@ class Board:
         """
         Adds the index of the move to the respective players indexes
         :param index: index of the move
-        :param is_player_x: is the current player X
+        :param is_player_x: boolean indicating whether the player is X or not
         """
         if is_player_x:
             self.x_indexes.add(index)
@@ -70,8 +70,8 @@ class Board:
         Enlarges the board by 1 x and 1 y if the move is out of bounds
         :param x: row number
         :param y: column number
-        :param is_player_x: is the current player X
-        :return: Boolean indicating if the board was enlarged by the move or not
+        :param is_player_x: boolean indicating whether the player is X or not
+        :return: boolean indicating if the board was enlarged by the move or not
         """
         is_enlarged = False
         if x > self.size or y > self.size:
@@ -85,7 +85,7 @@ class Board:
         Checks if the move is valid
         :param x: row number
         :param y: column number
-        :return: Boolean indicating if the move is valid
+        :return: boolean indicating if the move is valid
         """
         index = self.calculate_index_from_position(x, y)
         # Move is invalid if the index of the move is already occupied or the move is out of bounds by more than 1
@@ -97,7 +97,7 @@ class Board:
         """
         Checks if the index is occupied by either of the players
         :param index: index to be checked
-        :return: Boolean indicating weather the index is occupied or not
+        :return: boolean indicating weather the index is occupied or not
         """
         return self.is_index_in_indexes_for_player(index, True) or self.is_index_in_indexes_for_player(index, False)
 
@@ -105,8 +105,8 @@ class Board:
         """
         Checks is the index is in the index set of the player
         :param index: index to be checked
-        :param is_player_x: is the player X
-        :return: Boolean indicating if the index is in the players index set
+        :param is_player_x: boolean indicating whether the player is X or not
+        :return: boolean indicating if the index is in the players index set
         """
         if is_player_x:
             return index in self.x_indexes
@@ -117,8 +117,8 @@ class Board:
         """
         Returns the neighbours of the index for the current player
         :param index: index to be checked
-        :param is_player_x: is the current player X
-        :return: All the neighbours of the index for the current player
+        :param is_player_x: boolean indicating whether the player is X or not
+        :return: all the neighbours of the index for the current player
         """
         neighbours = self.calculate_true_neighbouring_indexes(index)
         # Check if the valid neighbours of the last move are among the current players move indexes
@@ -129,9 +129,9 @@ class Board:
         Checks if the last move won the game
         :param x: row number
         :param y: column number
-        :param is_player_x: is the current player X
+        :param is_player_x: boolean indicating whether the player is X or not
         :param chain_length: is the length of the chain required to win the game
-        :return: Boolean indication if the last move won the game
+        :return: boolean indication if the last move won the game
         """
         index = self.calculate_index_from_position(x, y)
         matches = self.get_neighbours(index, is_player_x)
@@ -165,8 +165,8 @@ class Board:
         :param chain_length: the length of the searched chain
         :param direction: direction of the chain
         :param index: index of the last move
-        :param is_player_x: is the current player X
-        :return: Boolean indicating that there is a chain of moves for the current player
+        :param is_player_x: boolean indicating whether the player is X or not
+        :return: boolean indicating that there is a chain of moves for the current player
         """
         count = 1
         started = index
@@ -258,10 +258,10 @@ class Board:
         Set the next move on the board
         :param x: row number
         :param y: column number
-        :param is_player_x: is the current player X
+        :param is_player_x: boolean indicating whether the player is X or not
         :raises IndexError: if the move is invalid
-        :return: is_win: Boolean indicating if the move won the game
-        is_enlarged: Boolean indicating if the board was enlarged by the move or not
+        :return: is_win, is_enlarged: boolean indicating if the move won the game,
+                                     and boolean indicating if the board was enlarged by the move or not
         """
         if not self.is_position_valid(x, y):
             raise IndexError
