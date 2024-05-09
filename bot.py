@@ -16,16 +16,28 @@ class Bot:
         self.o_index_chains = []
 
     def recalculate_chains(self):
+        """
+        Recalculates the saved chains after enlargement
+        """
         self.recalculate_chain(True)
         self.recalculate_chain(False)
 
     def recalculate_chain(self, is_player_x):
+        """
+        Recalculate a specific chain after enlargement
+        :param is_player_x: boolean indicating if the player is X
+        """
         for index_chain in self.x_index_chains if is_player_x else self.o_index_chains:
             new_index_chain = self.board.shift_indexes(index_chain)
             index_chain.clear()
             index_chain.update(new_index_chain)
 
     def add_last_move(self, move, is_player_x):
+        """
+        Add the last move to the cache
+        :param move: (x, y) tuple containing the coordinates of the last move
+        :param is_player_x: boolean indicating if the player is X
+        """
         index = self.board.calculate_index_from_position(move[0], move[1])
         matches = self.board.get_neighbours(index, is_player_x)
         if len(self.x_index_chains if is_player_x else self.o_index_chains) == 0 or len(matches) == 0:
