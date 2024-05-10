@@ -54,7 +54,7 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains.append({84, 85, 86})
         self.bot.x_index_chains.append({87, 88})
         self.bot.x_index_chains.append({82, 83})
-        self.bot.delete_indexes_from_chain([0], False)
+        self.bot.check_for_open_chains([0], False)
         self.assertEqual([], self.bot.o_index_chains)
         self.assertEqual([{82, 83}, {87, 88}], self.bot.x_index_chains)
 
@@ -62,7 +62,7 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains.append({84, 103, 122})
         self.bot.x_index_chains.append({65})
         self.bot.x_index_chains.append({141})
-        self.bot.delete_indexes_from_chain([0], False)
+        self.bot.check_for_open_chains([0], False)
         self.assertEqual([], self.bot.o_index_chains)
         self.assertEqual([{65}, {141}], self.bot.x_index_chains)
 
@@ -70,7 +70,7 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains.append({84, 104, 124})
         self.bot.x_index_chains.append({64})
         self.bot.x_index_chains.append({144})
-        self.bot.delete_indexes_from_chain([0], False)
+        self.bot.check_for_open_chains([0], False)
         self.assertEqual([], self.bot.o_index_chains)
         self.assertEqual([{64}, {144}], self.bot.x_index_chains)
 
@@ -78,7 +78,7 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains.append({84, 105, 126})
         self.bot.x_index_chains.append({63})
         self.bot.x_index_chains.append({147})
-        self.bot.delete_indexes_from_chain([0], False)
+        self.bot.check_for_open_chains([0], False)
         self.assertEqual([], self.bot.o_index_chains)
         self.assertEqual([{63}, {147}], self.bot.x_index_chains)
 
