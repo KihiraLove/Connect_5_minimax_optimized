@@ -27,7 +27,6 @@ class TestBot(unittest.TestCase):
         pass
 
     def test_check_for_overlap_dir1(self):
-        #check for angle
         self.bot.o_index_chains.append({84, 85, 86})
         self.bot.o_index_chains.append({82, 83, 84})
         self.bot.check_for_overlap([(0, 1), (1, 1)], False)
@@ -51,8 +50,37 @@ class TestBot(unittest.TestCase):
         self.bot.check_for_overlap([(0, 21), (1, 21)], False)
         self.assertEqual([{84, 105, 126, 147, 168}], self.bot.o_index_chains)
 
-    def test_delete_indexes_from_chain(self):
-        pass
+    def test_delete_indexes_from_chain_o_dir1(self):
+        self.bot.o_index_chains.append({84, 85, 86})
+        self.bot.x_index_chains.append({87, 88})
+        self.bot.x_index_chains.append({82, 83})
+        self.bot.delete_indexes_from_chain([0], False)
+        self.assertEqual([], self.bot.o_index_chains)
+        self.assertEqual([{82, 83}, {87, 88}], self.bot.x_index_chains)
+
+    def test_delete_indexes_from_chain_o_dir19(self):
+        self.bot.o_index_chains.append({84, 103, 122})
+        self.bot.x_index_chains.append({65})
+        self.bot.x_index_chains.append({141})
+        self.bot.delete_indexes_from_chain([0], False)
+        self.assertEqual([], self.bot.o_index_chains)
+        self.assertEqual([{65}, {141}], self.bot.x_index_chains)
+
+    def test_delete_indexes_from_chain_o_dir20(self):
+        self.bot.o_index_chains.append({84, 104, 124})
+        self.bot.x_index_chains.append({64})
+        self.bot.x_index_chains.append({144})
+        self.bot.delete_indexes_from_chain([0], False)
+        self.assertEqual([], self.bot.o_index_chains)
+        self.assertEqual([{64}, {144}], self.bot.x_index_chains)
+
+    def test_delete_indexes_from_chain_o_dir21(self):
+        self.bot.o_index_chains.append({84, 105, 126})
+        self.bot.x_index_chains.append({63})
+        self.bot.x_index_chains.append({147})
+        self.bot.delete_indexes_from_chain([0], False)
+        self.assertEqual([], self.bot.o_index_chains)
+        self.assertEqual([{63}, {147}], self.bot.x_index_chains)
 
     def test_smart_move(self):
         pass
