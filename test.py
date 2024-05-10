@@ -15,13 +15,19 @@ class TestBot(unittest.TestCase):
         self.assertEqual(self.bot.o_index_chains, [])
 
     def test_recalculate_chains(self):
-        pass
+        indexes = {0, 19, 380, 399}
+        shifted_indexes = {0, 19, 399, 418}
+        self.bot.x_index_chains.append(indexes)
+        self.bot.recalculate_chain(True)
+        self.assertEqual(shifted_indexes, self.bot.x_index_chains[0])
 
     def test_add_last_move(self):
         pass
 
+
     def test_vet_closed_chains(self):
         pass
+
 
     def test_add_index_to_chain(self):
         pass
@@ -51,8 +57,10 @@ class TestBot(unittest.TestCase):
         self.bot.check_for_overlap([(0, 21), (1, 21)], False)
         self.assertEqual([{84, 105, 126, 147, 168}], self.bot.o_index_chains)
 
+
     def test_delete_indexes_from_chain(self):
         pass
+
 
     def test_smart_move(self):
         pass
