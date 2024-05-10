@@ -1,7 +1,7 @@
 import unittest
 
-from Connect_5_minimax_optimized.board import Board
-from Connect_5_minimax_optimized.bot import Bot
+from board import Board
+from bot import Bot
 
 
 class TestBot(unittest.TestCase):
@@ -22,7 +22,16 @@ class TestBot(unittest.TestCase):
         self.assertEqual(shifted_indexes, self.bot.x_index_chains[0])
 
     def test_add_last_move(self):
-        pass
+        indexes1 = {59, 79}
+        indexes2 = {19}
+        move = (2, 20)
+        solution = {19, 39, 59, 79}
+        self.board.x_indexes.update(indexes1.union(indexes2))
+        self.bot.x_index_chains.append(indexes1)
+        self.bot.x_index_chains.append(indexes2)
+        self.bot.add_last_move(move, True)
+        print(self.bot.x_index_chains)
+        self.assertEqual(solution, self.bot.x_index_chains[0])
 
 
     def test_vet_closed_chains(self):
