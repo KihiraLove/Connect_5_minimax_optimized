@@ -3,7 +3,7 @@ import random
 
 class Bot:
     # TODO: Track open 3 and 4 long chains
-    # TODO: Hardcore win condition
+    # TODO: check chain boundaries
     # TODO: Block opponent 4 chains open from one side, 3 chains open from both sides
     # TODO: Cache subtree
 
@@ -80,7 +80,7 @@ class Bot:
                 deletable_indexes.append(i)
 
         if len(deletable_indexes) > 0:
-            self.delete_indexes_from_chain(deletable_indexes, is_opponent_x)
+            self.delete_chain_by_index(deletable_indexes, is_opponent_x)
 
     def add_index_to_chain(self, index, neighbour, is_player_x):
         """
@@ -126,7 +126,7 @@ class Bot:
                 if direction == chain_direction:
                     self.merge_chains(chain_index, index, is_player_x)
                     removable_chains.append(index)
-        self.delete_indexes_from_chain(removable_chains, is_player_x)
+        self.delete_chain_by_index(removable_chains, is_player_x)
 
     def merge_chains(self, index_to_merge_to, index_to_merge, is_player_x):
         """
@@ -151,7 +151,7 @@ class Bot:
         else:
             self.o_index_chains.append(chain)
 
-    def delete_indexes_from_chain(self, indexes, is_player_x):
+    def delete_chain_by_index(self, indexes, is_player_x):
         """
         Delete chains from players index chains by their indexes
         :param indexes: list of indexes of the chains to be deleted
@@ -191,38 +191,38 @@ class Bot:
                     return i
         return None
 
+    def check_for_4_move(self, is_player_x):
+        """
+        Check if the bot has a 4 long chain to win
+        or check if the opponent has a 4 long chain that the bot has to block
+        :param is_player_x: boolean indicating whether the player is X
+        :return: coordinates of the move or None
+        """
+        index_of_chain = self.check_for_open_chains(4, is_player_x)
+        move = None
+        if index_of_chain is not None:
+            # Bot can win with 4 long chain
+            # Player can win with 4 win chain, bot has to block it
+            chain = list(self.x_index_chains[index_of_chain] if is_player_x else self.x_index_chains[index_of_chain])
+            direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
+            negative_closing_index = chain[0] - direction
+            positive_closing_index = chain[-1] + direction
+            if self.board.is_index_occupied(negative_closing_index):
+                move = self.board.calculate_position_from_index(positive_closing_index)
+            else:
+                move = self.board.calculate_position_from_index(negative_closing_index)
+        return move
+
     def smart_move(self, last_move, enlarged):
+        move_found = False
         if enlarged:
             self.recalculate_chains()
         self.add_last_move(last_move, True)
-        # Check if the bot has a 4 long chain
-        index_of_chain = self.check_for_open_chains(4, False)
-        move = ()
-        if index_of_chain is not None:
-            # Bot can win with 4 long chain
-            chain = list(self.o_index_chains[index_of_chain])
-            direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
-            negative_closing_index = chain[0] - direction
-            positive_closing_index = chain[-1] + direction
-            if self.board.is_index_occupied(negative_closing_index):
-                move = self.board.calculate_position_from_index(positive_closing_index)
-            else:
-                move = self.board.calculate_position_from_index(negative_closing_index)
-        # Check if opponent has a 4 long chain
-        index_of_chain = self.check_for_open_chains(4, True)
-        if index_of_chain is not None:
-            # TODO: finish this
-            # Block opponents 4 long chain
-            chain = list(self.x_index_chains[index_of_chain])
-            direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
-            negative_closing_index = chain[0] - direction
-            positive_closing_index = chain[-1] + direction
-            if self.board.is_index_occupied(negative_closing_index):
-                move = self.board.calculate_position_from_index(positive_closing_index)
-            else:
-                move = self.board.calculate_position_from_index(negative_closing_index)
-
-
+        # Check for win condition
+        move = self.check_for_4_move(False)
+        if move is None:
+            # Check for opponent win condition to block
+            move = self.check_for_4_move(True)
 
         # TODO: make bot chose move
         move = (random.randint(1, 20), random.randint(1, 20))

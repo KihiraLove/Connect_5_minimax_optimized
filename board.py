@@ -219,7 +219,7 @@ class Board:
         """
         # Add all neighbours into a set
         mathematical_neighbours = {index - self.size - 1, index - self.size, index - self.size + 1,
-                                    index - 1, index + 1 ,
+                                    index - 1, index + 1,
                                     index + self.size - 1, index + self.size, index + self.size + 1}
         return sorted(mathematical_neighbours)
 
