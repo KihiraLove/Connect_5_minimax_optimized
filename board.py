@@ -1,5 +1,4 @@
 class Board:
-    # TODO: Unit test this class
     def __init__(self):
         """
         Define a board for the 5 steps game
