@@ -1,5 +1,4 @@
 class Board:
-    # TODO: Unit test this class
     def __init__(self):
         """
         Define a board for the 5 steps game
@@ -94,6 +93,7 @@ class Board:
         return True
 
     def is_index_occupied(self, index):
+        # TODO: check for the edge of the board
         """
         Checks if the index is occupied by either of the players
         :param index: index to be checked

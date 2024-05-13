@@ -2,9 +2,7 @@ import random
 
 
 class Bot:
-    # TODO: Track open 3 and 4 long chains
     # TODO: check chain boundaries
-    # TODO: Block opponent 4 chains open from one side, 3 chains open from both sides
     # TODO: Cache subtree
 
     def __init__(self, board):
@@ -54,7 +52,6 @@ class Bot:
         :param neighbour: neighbouring index of the last move
         :param is_opponent_x: boolean indicating whether the opponent is X
         """
-        # TODO: Check chains closed by the border of the board
         deletable_indexes = []
         # Check the opponents chains
         for i, index_chain in enumerate(self.x_index_chains if is_opponent_x else self.o_index_chains):
@@ -76,7 +73,17 @@ class Bot:
             positive_match = positive_closing_index == index
             negative_in_chain = negative_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
             positive_in_chain = positive_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
-            if (negative_match and positive_in_chain) or (positive_match and negative_in_chain):
+            negative_off_the_board = self.board.neighbour_breaks_rule(negative_closing_index, chain[0])
+            positive_off_the_board = self.board.neighbour_breaks_rule(positive_closing_index, chain[-1])
+            positive_closing = positive_in_chain or positive_off_the_board
+            negative_closing = negative_in_chain or negative_off_the_board
+            false_positive = ((chain_direction == 19 and chain[0] >= self.board.size)
+                              or (chain_direction == 1 and chain[0] % self.board.size > 0)
+                              or (chain_direction == 20 and chain[-1] > self.board.size * (self.board.size - 1))
+                              or (chain_direction == 21 and (chain[-1] > self.board.size * (self.board.size - 1)
+                                                             or chain[-1] % self.board.size > 0)))
+
+            if ((negative_match and positive_closing) or (positive_match and negative_closing)) and not false_positive:
                 deletable_indexes.append(i)
 
         if len(deletable_indexes) > 0:
