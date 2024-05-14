@@ -73,21 +73,49 @@ class Bot:
             positive_match = positive_closing_index == index
             negative_in_chain = negative_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
             positive_in_chain = positive_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
-            negative_off_the_board = self.board.neighbour_breaks_rule(negative_closing_index, chain[0])
-            positive_off_the_board = self.board.neighbour_breaks_rule(positive_closing_index, chain[-1])
-            positive_closing = positive_in_chain or positive_off_the_board
-            negative_closing = negative_in_chain or negative_off_the_board
-            false_positive = ((chain_direction == 19 and chain[0] >= self.board.size)
-                              or (chain_direction == 1 and chain[0] % self.board.size > 0)
-                              or (chain_direction == 20 and chain[-1] > self.board.size * (self.board.size - 1))
-                              or (chain_direction == 21 and (chain[-1] > self.board.size * (self.board.size - 1)
-                                                             or chain[-1] % self.board.size > 0)))
+            blocked_by_edge = self.is_chain_blocked_by_edge(chain_direction, chain[0], chain[-1])
+            positive_closing = positive_in_chain or blocked_by_edge
+            negative_closing = negative_in_chain or blocked_by_edge
 
-            if ((negative_match and positive_closing) or (positive_match and negative_closing)) and not false_positive:
+            if (negative_match and positive_closing) or (positive_match and negative_closing):
                 deletable_indexes.append(i)
 
         if len(deletable_indexes) > 0:
             self.delete_chain_by_index(deletable_indexes, is_opponent_x)
+
+    def is_chain_blocked_by_edge(self, direction, chain_neg_index, chain_pos_index):
+        """
+        Check if a chain is blocked by edge
+        :param direction: direction of the chain
+        :param chain_neg_index: the first index of the chain
+        :param chain_pos_index: the last index of the chain
+        :return: boolean indicating if the chain is blocked by edge
+        """
+        neg_in_row1 = self.is_index_in_row1(chain_neg_index)
+        neg_in_col1 = self.is_index_in_col1(chain_neg_index)
+        pos_in_col1 = self.is_index_in_col1(chain_pos_index)
+        if ((direction == 20 and neg_in_row1)
+                or (direction == 1 and neg_in_col1)
+                or (direction == 19 and (neg_in_row1 or pos_in_col1))
+                or (direction == 21 and (neg_in_row1 or neg_in_col1))):
+            return True
+        return False
+
+    def is_index_in_row1(self, index):
+        """
+        Check if the index is in the first row
+        :param index: index of a move
+        :return: boolean indicating if the index is in the first row
+        """
+        return index < self.board.size
+
+    def is_index_in_col1(self, index):
+        """
+        Check if the index is in the first column
+        :param index: index of a move
+        :return: boolean indicating if the index is in the first column
+        """
+        return index % self.board.size == 0
 
     def add_index_to_chain(self, index, neighbour, is_player_x):
         """
