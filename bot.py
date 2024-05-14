@@ -2,7 +2,6 @@ import random
 
 
 class Bot:
-    # TODO: check chain boundaries
     # TODO: Cache subtree
 
     def __init__(self, board):
@@ -35,11 +34,14 @@ class Bot:
         """
         index = self.board.calculate_index_from_position(move[0], move[1])
         matches = self.board.get_neighbours(index, is_player_x)
+        changed_chains_index_direction = []
         if len(self.x_index_chains if is_player_x else self.o_index_chains) == 0 or len(matches) == 0:
             self.add_new_chain({index}, is_player_x)
         else:
             for neighbour in matches:
-                self.add_index_to_chain(index, neighbour, is_player_x)
+                changed_chains_index_direction.extend(self.add_index_to_chain(index, neighbour, is_player_x))
+        if len(changed_chains_index_direction) > 1:
+            self.check_for_overlap(changed_chains_index_direction, is_player_x)
         opponent = not is_player_x
         opponent_matches = self.board.get_neighbours(index, opponent)
         for neighbour in opponent_matches:
@@ -126,6 +128,7 @@ class Bot:
         """
         direction = self.calculate_direction_of_neighbours(index, neighbour)
         changed_chains_index_direction = []
+        chains_to_be_added = []
         for i, index_chain in enumerate(self.x_index_chains) if is_player_x else enumerate(self.o_index_chains):
             if neighbour not in index_chain:
                 continue
@@ -141,10 +144,14 @@ class Bot:
             else:
                 # Create a new chain and add it to the list, if we form a new chain
                 # with an index, from all already existing chain
-                self.add_new_chain({index, neighbour}, is_player_x)
-
-        if len(changed_chains_index_direction) > 1:
-            self.check_for_overlap(changed_chains_index_direction, is_player_x)
+                chains_to_be_added.append(({index, neighbour}, self.calculate_direction_of_neighbours(index, neighbour)))
+        index_offset = 0
+        for chain, direction in chains_to_be_added:
+            chain_index = len(self.x_index_chains if is_player_x else self.o_index_chains) + index_offset
+            changed_chains_index_direction.append((chain_index, direction))
+            self.add_new_chain(chain, is_player_x)
+            index_offset += 1
+        return changed_chains_index_direction
 
     def check_for_overlap(self, changed_chains, is_player_x):
         """

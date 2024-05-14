@@ -93,7 +93,6 @@ class Board:
         return True
 
     def is_index_occupied(self, index):
-        # TODO: check for the edge of the board
         """
         Checks if the index is occupied by either of the players
         :param index: index to be checked
