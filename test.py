@@ -15,20 +15,19 @@ class TestBot(unittest.TestCase):
         self.assertEqual(self.bot.o_index_chains, [])
 
     def test_recalculate_chains(self):
-        indexes = {0, 19, 380, 399}
-        shifted_indexes = {0, 19, 399, 418}
-        self.bot.x_index_chains.append(indexes)
-        self.bot.recalculate_chain(True)
-        self.assertEqual(shifted_indexes, self.bot.x_index_chains[0])
+        shifted_indexes = [{0, 19, 399, 418}, {0, 22, 44, 66}]
+        self.bot.x_index_chains = [{0, 19, 380, 399}, {0, 21, 42, 63}]
+        self.bot.o_index_chains = [{0, 19, 380, 399}, {0, 21, 42, 63}]
+        self.bot.recalculate_chains()
+        self.assertEqual(shifted_indexes, self.bot.x_index_chains)
+        self.assertEqual(shifted_indexes, self.bot.o_index_chains)
 
     def test_add_last_move(self):
-        indexes1 = {59, 79}
-        indexes2 = {19}
         move = (2, 20)
         solution = {19, 39, 59, 79}
-        self.board.x_indexes.update(indexes1.union(indexes2))
-        self.bot.x_index_chains.append(indexes1)
-        self.bot.x_index_chains.append(indexes2)
+        self.board.x_indexes.update({19, 59, 79})
+        self.bot.x_index_chains.append({59, 79})
+        self.bot.x_index_chains.append({19})
         self.bot.add_last_move(move, True)
         print(self.bot.x_index_chains)
         self.assertEqual(solution, self.bot.x_index_chains[0])
@@ -41,26 +40,26 @@ class TestBot(unittest.TestCase):
     def test_add_index_to_chain(self):
         pass
 
-    def test_check_for_overlap_dir1(self):
-        #check for angle
+    def test_check_for_overlap_horizontal(self):
+        # check for angle
         self.bot.o_index_chains.append({84, 85, 86})
         self.bot.o_index_chains.append({82, 83, 84})
         self.bot.check_for_overlap([(0, 1), (1, 1)], False)
         self.assertEqual([{82, 83, 84, 85, 86}], self.bot.o_index_chains)
 
-    def test_check_for_overlap_dir19(self):
+    def test_check_for_overlap_diagonal_down_up(self):
         self.bot.o_index_chains.append({84, 103, 122})
         self.bot.o_index_chains.append({122, 141, 160})
         self.bot.check_for_overlap([(0, 19), (1, 19)], False)
         self.assertEqual([{84, 103, 122, 141, 160}], self.bot.o_index_chains)
 
-    def test_check_for_overlap_dir20(self):
+    def test_check_for_overlap_vertical(self):
         self.bot.o_index_chains.append({84, 104, 124})
         self.bot.o_index_chains.append({124, 144, 164})
         self.bot.check_for_overlap([(0, 20), (1, 20)], False)
         self.assertEqual([{84, 104, 124, 144, 164}], self.bot.o_index_chains)
 
-    def test_check_for_overlap_dir21(self):
+    def test_check_for_overlap_diagonal_up_down(self):
         self.bot.o_index_chains.append({84, 105, 126})
         self.bot.o_index_chains.append({126, 147, 168})
         self.bot.check_for_overlap([(0, 21), (1, 21)], False)
