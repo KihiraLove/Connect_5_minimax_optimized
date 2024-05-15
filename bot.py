@@ -3,6 +3,7 @@ import random
 
 class Bot:
     # TODO: Cache subtree
+    # TODO: add a function to check for off the board moves when choosing a move, to have the correct index
 
     def __init__(self, board):
         self.board = board
@@ -57,13 +58,13 @@ class Bot:
         deletable_indexes = []
         # Check the opponents chains
         for i, index_chain in enumerate(self.x_index_chains if is_opponent_x else self.o_index_chains):
+            if neighbour not in index_chain:
+                continue
             if len(index_chain) == 1:
                 neighbours = self.board.calculate_true_neighbouring_indexes(index)
                 neighbour_count = len(neighbours)
                 if neighbour_count == len(self.board.x_indexes.intersection(neighbours) if is_opponent_x else self.board.o_indexes.intersection(neighbours)):
                     deletable_indexes.append(i)
-            if neighbour not in index_chain:
-                continue
             chain = list(index_chain)
             chain_direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - chain_direction
@@ -96,10 +97,10 @@ class Bot:
         neg_in_row1 = self.is_index_in_row1(chain_neg_index)
         neg_in_col1 = self.is_index_in_col1(chain_neg_index)
         pos_in_col1 = self.is_index_in_col1(chain_pos_index)
-        if ((direction == 20 and neg_in_row1)
+        if ((direction == self.board.size and neg_in_row1)
                 or (direction == 1 and neg_in_col1)
-                or (direction == 19 and (neg_in_row1 or pos_in_col1))
-                or (direction == 21 and (neg_in_row1 or neg_in_col1))):
+                or (direction == self.board.size - 1 and (neg_in_row1 or pos_in_col1))
+                or (direction == self.board.size + 1 and (neg_in_row1 or neg_in_col1))):
             return True
         return False
 
@@ -166,7 +167,9 @@ class Bot:
             chain_index, chain_direction = changed_chains.pop()
             for index, direction in changed_chains:
                 if direction == chain_direction:
-                    self.merge_chains(chain_index, index, is_player_x)
+                    # merge_chains returns True if the new chain is blocked from both sides, and is safe to remove
+                    if self.merge_chains(chain_index, index, is_player_x):
+                        removable_chains.append(chain_index)
                     removable_chains.append(index)
         self.delete_chain_by_index(removable_chains, is_player_x)
 
@@ -176,11 +179,32 @@ class Bot:
         :param index_to_merge_to: index in the list of the chain to merge into
         :param index_to_merge: index in the list of the chain to merge
         :param is_player_x: boolean indicating whether the player is X or not
+        :return: boolean indicating whether the chain is blocked after the merge or not
         """
         if is_player_x:
             self.x_index_chains[index_to_merge_to].update(self.x_index_chains[index_to_merge])
         else:
             self.o_index_chains[index_to_merge_to].update(self.o_index_chains[index_to_merge])
+        return self.is_merged_chain_blocked(index_to_merge_to, is_player_x)
+
+    def is_merged_chain_blocked(self, index_of_chain, is_player_x):
+        """
+        Check if a new chain is blocked after the merge of two overlapping chains
+        :param index_of_chain: the index of the chain in teh list of chains
+        :param is_player_x: boolean indicating whether the player is X
+        :return: boolean indicating whether the chain is blocked after the merge or not
+        """
+        chain_list = list(self.x_index_chains[index_of_chain] if is_player_x else self.o_index_chains[index_of_chain])
+        direction = self.calculate_direction_of_neighbours(chain_list[0], chain_list[1])
+        blocked_by_edge = self.is_chain_blocked_by_edge(chain_list[0], chain_list[-1], is_player_x)
+        neg_closing_index = chain_list[0] - direction
+        pos_closing_index = chain_list[-1] + direction
+        neg_occupied = self.board.is_index_occupied(neg_closing_index)
+        pos_occupied = self.board.is_index_occupied(pos_closing_index)
+        if (neg_occupied or pos_occupied) and blocked_by_edge:
+            return True
+        return False
+
 
     def add_new_chain(self, chain, is_player_x):
         """
@@ -249,14 +273,53 @@ class Bot:
             direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - direction
             positive_closing_index = chain[-1] + direction
-            if self.board.is_index_occupied(negative_closing_index):
-                move = self.board.calculate_position_from_index(positive_closing_index)
+            blocked_by_edge = self.is_chain_blocked_by_edge(direction, chain[0], chain[-1])
+            if not blocked_by_edge:
+                if self.board.is_index_occupied(negative_closing_index):
+                    move = self.board.calculate_position_from_index(positive_closing_index)
+                else:
+                    move = self.board.calculate_position_from_index(negative_closing_index)
             else:
-                move = self.board.calculate_position_from_index(negative_closing_index)
+                if direction == 1:
+                    # With horizontal direction this is the only possible move,
+                    # positive_closing_index should be free, otherwise it would have been filtered out previously
+                    # by vetting the closed chains
+                    # TODO: new index off the edge check
+                    move = self.board.calculate_position_from_index(positive_closing_index)
+                    if self.board.is_index_occupied(positive_closing_index):
+                        print("There is a bug in check_for_4_move functions horizontal move searching")
+                elif direction == self.board.size - 1:
+                    # With vertical direction this is the only possible move,
+                    # positive_closing_index should be free, otherwise it would have been filtered out previously
+                    # by vetting the closed chains
+                    # TODO: new index off the edge check
+                    if self.is_index_in_row1(negative_closing_index):
+                        move = self.board.calculate_position_from_index(positive_closing_index)
+                        if self.board.is_index_occupied(positive_closing_index):
+                            print("There is a bug in check_for_4_move functions diagonal down-up move searching")
+                    else:
+                        move = self.board.calculate_position_from_index(negative_closing_index)
+                        if self.board.is_index_occupied(negative_closing_index):
+                            print("There is a bug in check_for_4_move functions diagonal down-up move searching")
+                elif direction == self.board.size:
+                    # With vertical direction this is the only possible move,
+                    # positive_closing_index should be free, otherwise it would have been filtered out previously
+                    # by vetting the closed chains
+                    # TODO: new index off the edge check
+                    move = self.board.calculate_position_from_index(positive_closing_index)
+                    if self.board.is_index_occupied(positive_closing_index):
+                        print("There is a bug in check_for_4_move functions vertical move searching")
+                elif direction == self.board.size + 1:
+                    # With diagonal up-down direction this is the only possible move,
+                    # positive_closing_index should be free, otherwise it would have been filtered out previously
+                    # by vetting the closed chains
+                    # TODO: new index off the edge check
+                    move = self.board.calculate_position_from_index(positive_closing_index)
+                    if self.board.is_index_occupied(positive_closing_index):
+                        print("There is a bug in check_for_4_move functions diagonal up-down move searching")
         return move
 
     def smart_move(self, last_move, enlarged):
-        move_found = False
         if enlarged:
             self.recalculate_chains()
         self.add_last_move(last_move, True)

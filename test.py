@@ -22,26 +22,52 @@ class TestBot(unittest.TestCase):
         self.assertEqual(shifted_indexes, self.bot.x_index_chains)
         self.assertEqual(shifted_indexes, self.bot.o_index_chains)
 
-    def test_add_last_move(self):
+    def test_add_new_chain_empty_list(self):
+        self.bot.add_new_chain({0, 1}, True)
+        self.bot.add_new_chain({2, 3}, False)
+        self.assertEqual([{0, 1}], self.bot.x_index_chains)
+        self.assertEqual([{2, 3}], self.bot.o_index_chains)
+
+    def test_add_new_chain_existing_list(self):
+        self.bot.x_index_chains = [{0, 1}]
+        self.bot.o_index_chains = [{4, 5}]
+        self.bot.add_new_chain({2, 3}, True)
+        self.bot.add_new_chain({6, 7}, False)
+        self.assertEqual([{0, 1}, {2, 3}], self.bot.x_index_chains)
+        self.assertEqual([{4, 5}, {6, 7}], self.bot.o_index_chains)
+
+    def test_add_last_move_with_overlap(self):
         move = (2, 20)
         solution = {19, 39, 59, 79}
         self.board.x_indexes.update({19, 59, 79})
         self.bot.x_index_chains.append({59, 79})
         self.bot.x_index_chains.append({19})
         self.bot.add_last_move(move, True)
-        print(self.bot.x_index_chains)
         self.assertEqual(solution, self.bot.x_index_chains[0])
 
+    def test_add_last_move_new_chain_empty_chain_list(self):
+        moves = (2, 20)
+        self.bot.add_last_move(moves, True)
+        self.assertEqual({39}, self.bot.x_index_chains[0])
 
-    def test_vet_closed_chains(self):
-        pass
+    def test_add_last_move_new_chain_no_matches(self):
+        moves = (2, 20)
+        self.bot.x_index_chains.append({37})
+        self.board.add_index(37, True)
+        self.bot.add_last_move(moves, True)
+        self.assertEqual([{37}, {39}], self.bot.x_index_chains)
 
-
-    def test_add_index_to_chain(self):
-        pass
+    def test_add_last_move_with_vet_chains(self):
+        moves = (2, 20)
+        self.bot.o_index_chains.append({38, 58, 78})
+        self.board.add_index(38, False)
+        self.board.add_index(58, False)
+        self.board.add_index(78, False)
+        self.bot.add_last_move(moves, True)
+        self.assertEqual([{39}], self.bot.x_index_chains)
+        self.assertEqual([{38, 58, 78}], self.bot.o_index_chains)
 
     def test_check_for_overlap_horizontal(self):
-        # check for angle
         self.bot.o_index_chains.append({84, 85, 86})
         self.bot.o_index_chains.append({82, 83, 84})
         self.bot.check_for_overlap([(0, 1), (1, 1)], False)
@@ -52,6 +78,20 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains.append({122, 141, 160})
         self.bot.check_for_overlap([(0, 19), (1, 19)], False)
         self.assertEqual([{84, 103, 122, 141, 160}], self.bot.o_index_chains)
+
+    def test_check_for_overlap_multiple_directions(self):
+        self.bot.o_index_chains.append({46, 65, 84})
+        self.bot.o_index_chains.append({84, 103, 122})
+        self.bot.o_index_chains.append({84, 85, 86})
+        self.bot.o_index_chains.append({82, 83, 84})
+        self.bot.o_index_chains.append({44, 64, 84})
+        self.bot.o_index_chains.append({84, 104, 124})
+        self.bot.o_index_chains.append({42, 63, 84})
+        self.bot.o_index_chains.append({84, 105, 126})
+        changed_chains = [(0, 19), (1, 19), (2, 1), (3, 1), (4, 20), (5, 20), (6, 21), (7, 21)]
+        solution = [{46, 65, 84, 103, 122}, {82, 83, 84, 85, 86}, {44, 64, 84, 104, 124}, {42, 63, 84, 105, 126}]
+        self.bot.check_for_overlap(changed_chains, False)
+        self.assertEqual(solution, self.bot.o_index_chains)
 
     def test_check_for_overlap_vertical(self):
         self.bot.o_index_chains.append({84, 104, 124})
@@ -65,39 +105,125 @@ class TestBot(unittest.TestCase):
         self.bot.check_for_overlap([(0, 21), (1, 21)], False)
         self.assertEqual([{84, 105, 126, 147, 168}], self.bot.o_index_chains)
 
-    def test_delete_indexes_from_chain_o_dir1(self):
-        self.bot.o_index_chains.append({84, 85, 86})
-        self.bot.x_index_chains.append({87, 88})
-        self.bot.x_index_chains.append({82, 83})
-        self.bot.check_for_open_chains([0], False)
-        self.assertEqual([], self.bot.o_index_chains)
-        self.assertEqual([{82, 83}, {87, 88}], self.bot.x_index_chains)
+    def test_is_index_in_row1(self):
+        indexes_in_row_1 = [0, 1, 18, 19]
+        indexes_on_edge = [20, 21, 38, 39]
+        indexes_not_in_row1 = [40, 41, 58, 59]
+        for index in indexes_in_row_1:
+            self.assertTrue(self.bot.is_index_in_row1(index))
+        for index in indexes_on_edge:
+            self.assertFalse(self.bot.is_index_in_row1(index))
+        for index in indexes_not_in_row1:
+            self.assertFalse(self.bot.is_index_in_row1(index))
 
-    def test_delete_indexes_from_chain_o_dir19(self):
-        self.bot.o_index_chains.append({84, 103, 122})
-        self.bot.x_index_chains.append({65})
-        self.bot.x_index_chains.append({141})
-        self.bot.check_for_open_chains([0], False)
-        self.assertEqual([], self.bot.o_index_chains)
-        self.assertEqual([{65}, {141}], self.bot.x_index_chains)
+    def test_is_index_in_col1(self):
+        indexes_in_row_1 = [0, 20, 360, 380]
+        indexes_on_edge = [1, 21,  361, 381]
+        indexes_not_in_row1 = [2, 22,  362, 382]
+        for index in indexes_in_row_1:
+            self.assertTrue(self.bot.is_index_in_col1(index))
+        for index in indexes_on_edge:
+            self.assertFalse(self.bot.is_index_in_col1(index))
+        for index in indexes_not_in_row1:
+            self.assertFalse(self.bot.is_index_in_col1(index))
 
-    def test_delete_indexes_from_chain_o_dir20(self):
-        self.bot.o_index_chains.append({84, 104, 124})
-        self.bot.x_index_chains.append({64})
-        self.bot.x_index_chains.append({144})
-        self.bot.check_for_open_chains([0], False)
-        self.assertEqual([], self.bot.o_index_chains)
-        self.assertEqual([{64}, {144}], self.bot.x_index_chains)
+    def test_is_chain_blocked_by_edge_blocked_vertical(self):
+        direction = 20
+        chain_neg_index = 0
+        chain_pos_index = 20
+        self.assertTrue(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
 
-    def test_delete_indexes_from_chain_o_dir21(self):
-        self.bot.o_index_chains.append({84, 105, 126})
-        self.bot.x_index_chains.append({63})
-        self.bot.x_index_chains.append({147})
-        self.bot.check_for_open_chains([0], False)
-        self.assertEqual([], self.bot.o_index_chains)
-        self.assertEqual([{63}, {147}], self.bot.x_index_chains)
+    def test_is_chain_blocked_by_edge_not_blocked_vertical(self):
+        direction = 20
+        chain_neg_index = 360
+        chain_pos_index = 380
+        self.assertFalse(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
 
-    def test_smart_move(self):
+    def test_is_chain_blocked_by_edge_blocked_horizontal(self):
+        direction = 1
+        chain_neg_index = 0
+        chain_pos_index = 1
+        self.assertTrue(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+
+    def test_is_chain_blocked_by_edge_not_blocked_horizontal(self):
+        direction = 1
+        chain_neg_index = 18
+        chain_pos_index = 19
+        self.assertFalse(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+
+    def test_is_chain_blocked_by_edge_blocked_diagonal_down_up(self):
+        direction = 19
+        # blocked by upper edge
+        chain_neg_index = 19
+        chain_pos_index = 38
+        self.assertTrue(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+        # blocked by left edge
+        chain_neg_index = 21
+        chain_pos_index = 40
+        self.assertTrue(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+
+    def test_is_chain_blocked_by_edge_not_blocked_diagonal_down_up(self):
+        direction = 19
+        # not blocked by right edge
+        chain_neg_index = 39
+        chain_pos_index = 58
+        self.assertFalse(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+        # not blocked by lower edge
+        chain_neg_index = 381
+        chain_pos_index = 362
+        self.assertFalse(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+
+    def test_is_chain_blocked_by_edge_blocked_diagonal_up_down(self):
+        direction = 21
+        # not blocked by left edge
+        chain_neg_index = 20
+        chain_pos_index = 41
+        self.assertTrue(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+        # not blocked by upper edge
+        chain_neg_index = 1
+        chain_pos_index = 22
+        self.assertTrue(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+        # not blocked by both edges
+        chain_neg_index = 0
+        chain_pos_index = 21
+        self.assertTrue(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+
+    def test_is_chain_blocked_by_edge_not_diagonal_up_down(self):
+        direction = 21
+        # not blocked by both edges
+        chain_neg_index = 378
+        chain_pos_index = 399
+        self.assertFalse(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+        # not blocked by right edge
+        chain_neg_index = 358
+        chain_pos_index = 379
+        self.assertFalse(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+        # not blocked by lower edge
+        chain_neg_index = 377
+        chain_pos_index = 398
+        self.assertFalse(self.bot.is_chain_blocked_by_edge(direction, chain_neg_index, chain_pos_index))
+
+    def test_check_for_open_chains(self):
+        self.bot.x_index_chains = [{0}, {2, 3}, {5, 6, 7}]
+        self.bot.o_index_chains = [{20}, {22, 23}, {25, 26, 27}]
+        self.assertIsNone(self.bot.check_for_open_chains(4, True))
+        self.assertIsNone(self.bot.check_for_open_chains(4, False))
+        self.bot.add_new_chain({9, 10, 11, 12}, True)
+        self.bot.add_new_chain({29, 30, 31, 32}, False)
+        self.assertEqual(3, self.bot.check_for_open_chains(4, True))
+        self.assertEqual(3, self.bot.check_for_open_chains(4, False))
+
+    def test_add_index_to_chain(self):
+        index = 45
+        self.bot.x_index_chains = [{24}, {64}, {66, 87}, {26, 46, 66}]
+        self.board.x_indexes.update({24, 26, 46, 64, 66, 87})
+        self.bot.add_last_move((3, 6), True)
+        self.assertEqual([{24, 45, 66, 87}, {45, 46},{26, 45, 64}], self.bot.x_index_chains)
+
+    def test_check_for_4_move(self):
+        pass
+
+    def test_vet_closed_chains(self):
         pass
 
 
