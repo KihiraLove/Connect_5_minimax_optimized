@@ -68,7 +68,6 @@ class TestBot(unittest.TestCase):
         self.assertEqual([{38, 58, 78}], self.bot.o_index_chains)
 
     def test_check_for_overlap_horizontal(self):
-        # check for angle
         self.bot.o_index_chains.append({84, 85, 86})
         self.bot.o_index_chains.append({82, 83, 84})
         self.bot.check_for_overlap([(0, 1), (1, 1)], False)
@@ -79,6 +78,20 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains.append({122, 141, 160})
         self.bot.check_for_overlap([(0, 19), (1, 19)], False)
         self.assertEqual([{84, 103, 122, 141, 160}], self.bot.o_index_chains)
+
+    def test_check_for_overlap_multiple_directions(self):
+        self.bot.o_index_chains.append({46, 65, 84})
+        self.bot.o_index_chains.append({84, 103, 122})
+        self.bot.o_index_chains.append({84, 85, 86})
+        self.bot.o_index_chains.append({82, 83, 84})
+        self.bot.o_index_chains.append({44, 64, 84})
+        self.bot.o_index_chains.append({84, 104, 124})
+        self.bot.o_index_chains.append({42, 63, 84})
+        self.bot.o_index_chains.append({84, 105, 126})
+        changed_chains = [(0, 19), (1, 19), (2, 1), (3, 1), (4, 20), (5, 20), (6, 21), (7, 21)]
+        solution = [{46, 65, 84, 103, 122}, {82, 83, 84, 85, 86}, {44, 64, 84, 104, 124}, {42, 63, 84, 105, 126}]
+        self.bot.check_for_overlap(changed_chains, False)
+        self.assertEqual(solution, self.bot.o_index_chains)
 
     def test_check_for_overlap_vertical(self):
         self.bot.o_index_chains.append({84, 104, 124})
@@ -113,38 +126,6 @@ class TestBot(unittest.TestCase):
             self.assertFalse(self.bot.is_index_in_col1(index))
         for index in indexes_not_in_row1:
             self.assertFalse(self.bot.is_index_in_col1(index))
-
-    def test_delete_indexes_from_chain_o_dir1(self):
-        self.bot.o_index_chains.append({84, 85, 86})
-        self.bot.x_index_chains.append({87, 88})
-        self.bot.x_index_chains.append({82, 83})
-        self.bot.check_for_open_chains([0], False)
-        self.assertEqual([], self.bot.o_index_chains)
-        self.assertEqual([{82, 83}, {87, 88}], self.bot.x_index_chains)
-
-    def test_delete_indexes_from_chain_o_dir19(self):
-        self.bot.o_index_chains.append({84, 103, 122})
-        self.bot.x_index_chains.append({65})
-        self.bot.x_index_chains.append({141})
-        self.bot.check_for_open_chains([0], False)
-        self.assertEqual([], self.bot.o_index_chains)
-        self.assertEqual([{65}, {141}], self.bot.x_index_chains)
-
-    def test_delete_indexes_from_chain_o_dir20(self):
-        self.bot.o_index_chains.append({84, 104, 124})
-        self.bot.x_index_chains.append({64})
-        self.bot.x_index_chains.append({144})
-        self.bot.check_for_open_chains([0], False)
-        self.assertEqual([], self.bot.o_index_chains)
-        self.assertEqual([{64}, {144}], self.bot.x_index_chains)
-
-    def test_delete_indexes_from_chain_o_dir21(self):
-        self.bot.o_index_chains.append({84, 105, 126})
-        self.bot.x_index_chains.append({63})
-        self.bot.x_index_chains.append({147})
-        self.bot.check_for_open_chains([0], False)
-        self.assertEqual([], self.bot.o_index_chains)
-        self.assertEqual([{63}, {147}], self.bot.x_index_chains)
 
     def test_is_chain_blocked_by_edge_blocked_vertical(self):
         direction = 20
@@ -231,6 +212,13 @@ class TestBot(unittest.TestCase):
         self.bot.add_new_chain({29, 30, 31, 32}, False)
         self.assertEqual(3, self.bot.check_for_open_chains(4, True))
         self.assertEqual(3, self.bot.check_for_open_chains(4, False))
+
+    def test_add_index_to_chain(self):
+        index = 45
+        self.bot.x_index_chains = [{24}, {64}, {66, 87}, {26, 46, 66}]
+        self.board.x_indexes.update({24, 26, 46, 64, 66, 87})
+        self.bot.add_last_move((3, 6), True)
+        self.assertEqual([{24, 45, 66, 87}, {45, 46},{26, 45, 64}], self.bot.x_index_chains)
 
     def test_check_for_4_move(self):
         pass
