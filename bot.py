@@ -86,6 +86,7 @@ class Bot:
             self.delete_chain_by_index(deletable_indexes, is_opponent_x)
 
     def is_chain_blocked_by_edge(self, direction, chain_neg_index, chain_pos_index):
+        # TODO: split to 2 functions
         """
         Check if a chain is blocked by edge
         :param direction: direction of the chain
