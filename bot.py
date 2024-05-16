@@ -65,7 +65,7 @@ class Bot:
                 neighbour_count = len(neighbours)
                 if neighbour_count == len(self.board.x_indexes.intersection(neighbours) if is_opponent_x else self.board.o_indexes.intersection(neighbours)):
                     deletable_indexes.append(i)
-            chain = list(index_chain)
+            chain = sorted(index_chain)
             chain_direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - chain_direction
             positive_closing_index = chain[-1] + chain_direction
@@ -74,8 +74,8 @@ class Bot:
 
             negative_match = negative_closing_index == index
             positive_match = positive_closing_index == index
-            negative_in_chain = negative_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
-            positive_in_chain = positive_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
+            negative_in_chain = negative_closing_index in self.board.x_indexes if not is_opponent_x else self.board.o_indexes
+            positive_in_chain = positive_closing_index in self.board.x_indexes if not is_opponent_x else self.board.o_indexes
             blocked_by_edge = self.is_chain_blocked_by_edge(chain_direction, chain[0], chain[-1])
             positive_closing = positive_in_chain or blocked_by_edge
             negative_closing = negative_in_chain or blocked_by_edge
@@ -137,7 +137,7 @@ class Bot:
                 index_chain.add(index)
                 changed_chains_index_direction.append((i, direction))
                 continue
-            sorted_chain = list(index_chain)
+            sorted_chain = sorted(index_chain)
             chain_direction = self.calculate_direction_of_neighbours(sorted_chain[0], sorted_chain[1])
             if direction == chain_direction:
                 index_chain.add(index)
@@ -194,7 +194,7 @@ class Bot:
         :param is_player_x: boolean indicating whether the player is X
         :return: boolean indicating whether the chain is blocked after the merge or not
         """
-        chain_list = list(self.x_index_chains[index_of_chain] if is_player_x else self.o_index_chains[index_of_chain])
+        chain_list = sorted(self.x_index_chains[index_of_chain] if is_player_x else self.o_index_chains[index_of_chain])
         direction = self.calculate_direction_of_neighbours(chain_list[0], chain_list[1])
         blocked_by_edge = self.is_chain_blocked_by_edge(chain_list[0], chain_list[-1], is_player_x)
         neg_closing_index = chain_list[0] - direction
@@ -269,7 +269,7 @@ class Bot:
         if index_of_chain is not None:
             # Bot can win with 4 long chain
             # Player can win with 4 win chain, bot has to block it
-            chain = list(self.x_index_chains[index_of_chain] if is_player_x else self.x_index_chains[index_of_chain])
+            chain = sorted(self.x_index_chains[index_of_chain] if is_player_x else self.x_index_chains[index_of_chain])
             direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - direction
             positive_closing_index = chain[-1] + direction
