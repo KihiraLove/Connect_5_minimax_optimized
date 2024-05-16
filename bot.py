@@ -94,13 +94,36 @@ class Bot:
         :param chain_pos_index: the last index of the chain
         :return: boolean indicating if the chain is blocked by edge
         """
-        neg_in_row1 = self.is_index_in_row1(chain_neg_index)
+        return (self.is_chain_blocked_top(direction, chain_neg_index)
+                or self.is_chain_blocked_left(direction, chain_neg_index, chain_pos_index))
+
+    def is_chain_blocked_left(self, direction, chain_neg_index, chain_pos_index):
+        """
+        Check if a chain is blocked by edge
+        :param direction: direction of the chain
+        :param chain_neg_index: the first index of the chain
+        :param chain_pos_index: the last index of the chain
+        :return: boolean indicating if the chain is blocked by edge
+        """
         neg_in_col1 = self.is_index_in_col1(chain_neg_index)
         pos_in_col1 = self.is_index_in_col1(chain_pos_index)
+        if ((direction == 1 and neg_in_col1)
+                or (direction == self.board.size - 1 and pos_in_col1)
+                or (direction == self.board.size + 1 and neg_in_col1)):
+            return True
+        return False
+
+    def is_chain_blocked_top(self, direction, chain_neg_index):
+        """
+        Check if a chain is blocked by edge
+        :param direction: direction of the chain
+        :param chain_neg_index: the first index of the chain
+        :return: boolean indicating if the chain is blocked by edge
+        """
+        neg_in_row1 = self.is_index_in_row1(chain_neg_index)
         if ((direction == self.board.size and neg_in_row1)
-                or (direction == 1 and neg_in_col1)
-                or (direction == self.board.size - 1 and (neg_in_row1 or pos_in_col1))
-                or (direction == self.board.size + 1 and (neg_in_row1 or neg_in_col1))):
+                or (direction == self.board.size - 1 and neg_in_row1)
+                or (direction == self.board.size + 1 and neg_in_row1)):
             return True
         return False
 
@@ -188,6 +211,7 @@ class Bot:
         return self.is_merged_chain_blocked(index_to_merge_to, is_player_x)
 
     def is_merged_chain_blocked(self, index_of_chain, is_player_x):
+        # TODO: check block for different sides and not for general block
         """
         Check if a new chain is blocked after the merge of two overlapping chains
         :param index_of_chain: the index of the chain in teh list of chains
@@ -201,7 +225,7 @@ class Bot:
         pos_closing_index = chain_list[-1] + direction
         neg_occupied = self.board.is_index_occupied(neg_closing_index)
         pos_occupied = self.board.is_index_occupied(pos_closing_index)
-        if (neg_occupied or pos_occupied) and blocked_by_edge:
+        if (neg_occupied or blocked_by_edge):
             return True
         return False
 
