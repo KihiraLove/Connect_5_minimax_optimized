@@ -1,7 +1,7 @@
 import unittest
 
-from Connect_5_minimax_optimized.board import Board
-from Connect_5_minimax_optimized.bot import Bot
+from board import Board
+from bot import Bot
 
 
 class TestBot(unittest.TestCase):
@@ -230,10 +230,22 @@ class TestBot(unittest.TestCase):
         self.assertEqual([{24, 45, 66, 87}, {45, 46},{26, 45, 64}], self.bot.x_index_chains)
 
     def test_check_for_4_move(self):
-        pass
+        self.bot.x_index_chains = [{20, 40, 60, 80}]
+        self.board.x_indexes.update({0, 20, 40, 60, 80})
+        self.assertIn(self.bot.check_for_4_move(True), [(1, 1), (6, 1)])
+
+    def test_check_for_4_move_edgecase(self):
+        self.bot.x_index_chains = [{0, 20, 40, 60}]
+        self.board.x_indexes.update({0, 20, 40, 60})
+        self.assertEqual('error', self.bot.check_for_4_move(True))
 
     def test_vet_closed_chains(self):
-        pass
+        self.bot.x_index_chains = [{87, 108, 129}]
+        self.bot.o_index_chains = [{66}, {150}]
+        self.board.x_indexes.update({87, 108, 129})
+        self.board.o_indexes.update({66, 150})
+        self.bot.vet_closed_chains(150, 129, True)
+        self.assertEqual([], self.bot.x_index_chains)
 
 
 class TestBoard(unittest.TestCase):
