@@ -57,7 +57,7 @@ class Bot:
         """
         deletable_indexes = []
         # Check the opponents chains
-        for i, index_chain in enumerate(self.x_index_chains if is_opponent_x else self.o_index_chains):
+        for i, index_chain in enumerate(self.x_index_chains) if is_opponent_x else enumerate(self.o_index_chains):
             if neighbour not in index_chain:
                 continue
             if len(index_chain) == 1:
