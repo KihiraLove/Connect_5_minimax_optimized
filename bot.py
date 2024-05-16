@@ -127,6 +127,34 @@ class Bot:
             return True
         return False
 
+    def is_neg_blocked(self, direction, chain_neg_index):
+        """
+        Check if a chain is blocked by edge
+        :param direction: direction of the chain
+        :param chain_neg_index: the first index of the chain
+        :return: boolean indicating if the chain is blocked by edge
+        """
+        neg_in_row1 = self.is_index_in_row1(chain_neg_index)
+        neg_in_col1 = self.is_index_in_col1(chain_neg_index)
+        if ((direction == 1 and neg_in_col1)
+                or (direction == self.board.size and neg_in_row1)
+                or (direction == self.board.size - 1 and neg_in_row1)
+                or (direction == self.board.size + 1 and neg_in_row1)):
+            return True
+        return False
+
+    def is_pos_blocked(self, direction, chain_pos_index):
+        """
+        Check if positive index is blocked
+        :param direction: direction of the chain
+        :param chain_pos_index: the last index of the chain
+        :return: boolean indicating if the chain is blocked by edge
+        """
+        pos_in_col1 = self.is_index_in_col1(chain_pos_index)
+        if direction == self.board.size - 1 and pos_in_col1:
+            return True
+        return False
+
     def is_index_in_row1(self, index):
         """
         Check if the index is in the first row
@@ -211,24 +239,24 @@ class Bot:
         return self.is_merged_chain_blocked(index_to_merge_to, is_player_x)
 
     def is_merged_chain_blocked(self, index_of_chain, is_player_x):
-        # TODO: check block for different sides and not for general block
         """
         Check if a new chain is blocked after the merge of two overlapping chains
-        :param index_of_chain: the index of the chain in teh list of chains
+        :param index_of_chain: the index of the chain in the list of chains
         :param is_player_x: boolean indicating whether the player is X
         :return: boolean indicating whether the chain is blocked after the merge or not
         """
         chain_list = sorted(self.x_index_chains[index_of_chain] if is_player_x else self.o_index_chains[index_of_chain])
         direction = self.calculate_direction_of_neighbours(chain_list[0], chain_list[1])
-        blocked_by_edge = self.is_chain_blocked_by_edge(chain_list[0], chain_list[-1], is_player_x)
+        blocked_by_edge = self.is_chain_blocked_by_edge(direction, chain_list[0], chain_list[-1])
+        pos_blocked = self.is_pos_blocked(direction, chain_list[-1])
+        neg_blocked = self.is_neg_blocked(direction, chain_list[0])
         neg_closing_index = chain_list[0] - direction
         pos_closing_index = chain_list[-1] + direction
         neg_occupied = self.board.is_index_occupied(neg_closing_index)
         pos_occupied = self.board.is_index_occupied(pos_closing_index)
-        if (neg_occupied or blocked_by_edge):
+        if (neg_occupied or neg_blocked) and (pos_occupied or pos_blocked):
             return True
         return False
-
 
     def add_new_chain(self, chain, is_player_x):
         """

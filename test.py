@@ -1,7 +1,7 @@
 import unittest
 
-from board import Board
-from bot import Bot
+from Connect_5_minimax_optimized.board import Board
+from Connect_5_minimax_optimized.bot import Bot
 
 
 class TestBot(unittest.TestCase):
