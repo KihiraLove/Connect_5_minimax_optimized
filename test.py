@@ -1,7 +1,7 @@
 import unittest
 
-from board import Board
-from bot import Bot
+from Connect_5_minimax_optimized.board import Board
+from Connect_5_minimax_optimized.bot import Bot
 
 
 class TestBot(unittest.TestCase):
@@ -104,6 +104,15 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains.append({126, 147, 168})
         self.bot.check_for_overlap([(0, 21), (1, 21)], False)
         self.assertEqual([{84, 105, 126, 147, 168}], self.bot.o_index_chains)
+
+    def test_check_for_overlap_new_chain_is_blocked(self):
+        index = 150
+        self.bot.x_index_chains = [{66, 87}, {192, 213}]
+        self.bot.o_index_chains = [{108, 129, 150}, {150, 171}]
+        self.board.x_indexes.update({66, 87, 192, 213})
+        self.board.o_indexes.update({108, 129, 150, 171})
+        self.bot.check_for_overlap([(0, 21), (1, 21)], False)
+        self.assertEqual([], self.bot.o_index_chains)
 
     def test_is_index_in_row1(self):
         indexes_in_row_1 = [0, 1, 18, 19]
