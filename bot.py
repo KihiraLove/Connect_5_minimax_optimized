@@ -57,7 +57,7 @@ class Bot:
         """
         deletable_indexes = []
         # Check the opponents chains
-        for i, index_chain in enumerate(self.x_index_chains if is_opponent_x else self.o_index_chains):
+        for i, index_chain in enumerate(self.x_index_chains) if is_opponent_x else enumerate(self.o_index_chains):
             if neighbour not in index_chain:
                 continue
             if len(index_chain) == 1:
@@ -65,7 +65,7 @@ class Bot:
                 neighbour_count = len(neighbours)
                 if neighbour_count == len(self.board.x_indexes.intersection(neighbours) if is_opponent_x else self.board.o_indexes.intersection(neighbours)):
                     deletable_indexes.append(i)
-            chain = list(index_chain)
+            chain = sorted(list(index_chain))
             chain_direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - chain_direction
             positive_closing_index = chain[-1] + chain_direction
@@ -74,8 +74,8 @@ class Bot:
 
             negative_match = negative_closing_index == index
             positive_match = positive_closing_index == index
-            negative_in_chain = negative_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
-            positive_in_chain = positive_closing_index in self.board.x_indexes if is_opponent_x else self.board.o_indexes
+            negative_in_chain = negative_closing_index in self.board.x_indexes if not is_opponent_x else self.board.o_indexes
+            positive_in_chain = positive_closing_index in self.board.x_indexes if not is_opponent_x else self.board.o_indexes
             blocked_by_edge = self.is_chain_blocked_by_edge(chain_direction, chain[0], chain[-1])
             positive_closing = positive_in_chain or blocked_by_edge
             negative_closing = negative_in_chain or blocked_by_edge
