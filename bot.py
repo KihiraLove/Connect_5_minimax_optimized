@@ -61,10 +61,12 @@ class Bot:
             if neighbour not in index_chain:
                 continue
             if len(index_chain) == 1:
-                neighbours = self.board.calculate_true_neighbouring_indexes(index)
-                neighbour_count = len(neighbours)
-                if neighbour_count == len(self.board.x_indexes.intersection(neighbours) if is_opponent_x else self.board.o_indexes.intersection(neighbours)):
+                # delete 1 long chain if blocked from all sides
+                neighbours_of_neighbour = self.board.calculate_true_neighbouring_indexes(neighbour) # all possible neighbours of neighbour
+                neighbour_count = len(neighbours_of_neighbour)
+                if neighbour_count == len(self.board.o_indexes.intersection(neighbours_of_neighbour) if is_opponent_x else self.board.x_indexes.intersection(neighbours_of_neighbour)):
                     deletable_indexes.append(i)
+                continue
             chain = sorted(index_chain)
             chain_direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - chain_direction
@@ -329,6 +331,8 @@ class Bot:
             if not blocked_by_edge:
                 if self.board.is_index_occupied(negative_closing_index):
                     move = self.board.calculate_position_from_index(positive_closing_index)
+                    if self.board.is_index_occupied(positive_closing_index):
+                        raise RuntimeError
                 else:
                     move = self.board.calculate_position_from_index(negative_closing_index)
             else:
@@ -340,6 +344,7 @@ class Bot:
                     move = self.board.calculate_position_from_index(positive_closing_index)
                     if self.board.is_index_occupied(positive_closing_index):
                         print("There is a bug in check_for_4_move functions horizontal move searching")
+                        raise RuntimeError
                 elif direction == self.board.size - 1:
                     # With vertical direction this is the only possible move,
                     # positive_closing_index should be free, otherwise it would have been filtered out previously
@@ -349,10 +354,12 @@ class Bot:
                         move = self.board.calculate_position_from_index(positive_closing_index)
                         if self.board.is_index_occupied(positive_closing_index):
                             print("There is a bug in check_for_4_move functions diagonal down-up move searching")
+                            raise RuntimeError
                     else:
                         move = self.board.calculate_position_from_index(negative_closing_index)
                         if self.board.is_index_occupied(negative_closing_index):
                             print("There is a bug in check_for_4_move functions diagonal down-up move searching")
+                            raise RuntimeError
                 elif direction == self.board.size:
                     # With vertical direction this is the only possible move,
                     # positive_closing_index should be free, otherwise it would have been filtered out previously
@@ -361,6 +368,7 @@ class Bot:
                     move = self.board.calculate_position_from_index(positive_closing_index)
                     if self.board.is_index_occupied(positive_closing_index):
                         print("There is a bug in check_for_4_move functions vertical move searching")
+                        raise RuntimeError
                 elif direction == self.board.size + 1:
                     # With diagonal up-down direction this is the only possible move,
                     # positive_closing_index should be free, otherwise it would have been filtered out previously
@@ -369,6 +377,7 @@ class Bot:
                     move = self.board.calculate_position_from_index(positive_closing_index)
                     if self.board.is_index_occupied(positive_closing_index):
                         print("There is a bug in check_for_4_move functions diagonal up-down move searching")
+                        raise RuntimeError
         return move
 
     def smart_move(self, last_move, enlarged):

@@ -231,13 +231,30 @@ class TestBot(unittest.TestCase):
 
     def test_check_for_4_move(self):
         self.bot.x_index_chains = [{20, 40, 60, 80}]
-        self.board.x_indexes.update({0, 20, 40, 60, 80})
+        self.board.x_indexes.update({20, 40, 60, 80})
         self.assertIn(self.bot.check_for_4_move(True), [(1, 1), (6, 1)])
 
-    def test_check_for_4_move_edgecase(self):
+    def test_check_for_4_move_blocked_by_edge(self):
         self.bot.x_index_chains = [{0, 20, 40, 60}]
         self.board.x_indexes.update({0, 20, 40, 60})
-        self.assertEqual('error', self.bot.check_for_4_move(True))
+        self.assertEqual((5, 1), self.bot.check_for_4_move(True))
+
+    def test_check_for_4_move_blocked_by_opponent(self):
+        self.bot.x_index_chains = [{20, 40, 60, 80}]
+        self.board.x_indexes.update({20, 40, 60, 80})
+        self.bot.o_index_chains = [{0}]
+        self.board.o_indexes.update({0})
+        self.assertEqual((6, 1), self.bot.check_for_4_move(True))
+
+    def test_check_for_4_move_blocked_from_both_sides(self):
+        # This can never happen, but we test it in case a bug makes it happen
+        self.bot.x_index_chains = [{20, 40, 60, 80}]
+        self.board.x_indexes.update({20, 40, 60, 80})
+        self.bot.o_index_chains = [{0}, {100}]
+        self.board.o_indexes.update({0, 100})
+        with self.assertRaises(RuntimeError):
+            move = self.bot.check_for_4_move(True)
+            print(move)
 
     def test_vet_closed_chains(self):
         self.bot.x_index_chains = [{87, 108, 129}]
@@ -245,6 +262,26 @@ class TestBot(unittest.TestCase):
         self.board.x_indexes.update({87, 108, 129})
         self.board.o_indexes.update({66, 150})
         self.bot.vet_closed_chains(150, 129, True)
+        self.assertEqual([], self.bot.x_index_chains)
+
+    def test_vet_closed_chains_1_long_not_closed(self):
+        self.bot.x_index_chains = [{0}, {19}, {380}, {399}]
+        self.board.x_indexes = {0, 19, 380, 399}
+        self.board.o_indexes = {1, 18, 381, 398}
+        self.bot.vet_closed_chains(1, 0, True)
+        self.bot.vet_closed_chains(18, 19, True)
+        self.bot.vet_closed_chains(381, 380, True)
+        self.bot.vet_closed_chains(398, 399, True)
+        self.assertEqual([{0}, {19}, {380}, {399}], self.bot.x_index_chains)
+
+    def test_vet_closed_chains_1_long_closed(self):
+        self.bot.x_index_chains = [{0}, {19}, {380}, {399}]
+        self.board.x_indexes = {0, 19, 380, 399}
+        self.board.o_indexes = {1, 18, 20, 21, 38, 39, 360, 361, 378, 379, 381, 398}
+        self.bot.vet_closed_chains(1, 0, True)
+        self.bot.vet_closed_chains(18, 19, True)
+        self.bot.vet_closed_chains(381, 380, True)
+        self.bot.vet_closed_chains(398, 399, True)
         self.assertEqual([], self.bot.x_index_chains)
 
 
