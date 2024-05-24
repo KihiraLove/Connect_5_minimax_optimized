@@ -4,25 +4,25 @@ import copy
 
 
 class Node:
-    def __init__(self, player, step=None, board=None):
+    def __init__(self, is_player_x, step=None, bot=None):
         self.value = float("-inf")
         self.step = step
-        self.player = player
+        self.is_player_x = is_player_x
         if step is not None:
-            Board.set_position(self.step[0], self.step[1], player)
-        self.board = board
+            bot.add_last_move(step, is_player_x)
+        self.bot = bot
 
     def set_value(self, val):
         self.value = val
 
     def get_board(self):
-        return self.board
+        return self.bot.board
 
     def set_step(self, step):
         self.step = step
 
     def get_player(self):
-        return self.player
+        return self.is_player_x
 
 
 class Bot:
@@ -30,6 +30,7 @@ class Bot:
         self.board = board
         self.x_index_chains = []
         self.o_index_chains = []
+        self.step = None
 
     def collect_possible_moves(self, board, is_player_o):
         possible_moves = []
@@ -80,19 +81,20 @@ class Bot:
 
     def minimax(self, node, depth, isMaximizingPlayer, alpha, beta):
         # if someone won return a corresponding inf value else return heuristic
-        if node.get_board().check_for_winner(node.get_player()):
-            if node.get_player() == 'O':
-                return float('+inf')
-            else:
-                return float('-inf')
-        elif depth == 5:
-            return self.heuristic(node, isMaximizingPlayer)
+        if node.step is not None:
+            if node.get_board().check_for_win(node.step[0], node.step[1], node.get_player()):
+                if node.get_player() is False:
+                    return float('+inf')
+                else:
+                    return float('-inf')
+            elif depth == 5:
+                return self.heuristic(node, isMaximizingPlayer)
 
         if isMaximizingPlayer:
             best_val = float('-inf')
             all_possible_moves = copy.deepcopy(self.collect_possible_moves(node.get_board(), True))
             for one_move in all_possible_moves:
-                new_node = Node('O', one_move, board=copy.deepcopy(node.get_board()))
+                new_node = Node(False, one_move, bot=copy.deepcopy(self))
                 value = self.minimax(new_node, depth + 1, False, alpha, beta)
                 best_val = max(best_val, value)
                 if value >= best_val and depth == 0:
@@ -106,7 +108,7 @@ class Bot:
             best_val = float('+inf')
             all_possible_moves = copy.deepcopy(self.collect_possible_moves(node.get_board(), False))
             for one_move in all_possible_moves:
-                new_node = Node('X', one_move, board=copy.deepcopy(node.get_board()))
+                new_node = Node(True, one_move, bot=copy.deepcopy(self))
                 value = self.minimax(new_node, depth + 1, True, alpha, beta)
                 best_val = min(best_val, value)
                 beta = min(beta, best_val)
@@ -579,13 +581,15 @@ class Bot:
         self.add_last_move(last_move, True)
         # Check for win condition
         move = self.check_for_4_move(False)
-        if move is None:
-            # Check for opponent win condition to block
-            move = self.check_for_4_move(True)
         if move is not None:
+            self.add_last_move(move, False)
             return move
-
-        # TODO: make bot chose move
-        move = (random.randint(1, 20), random.randint(1, 20))
-        self.add_last_move(move, False)
-        return move
+            # Check for opponent win condition to block
+        move = self.check_for_4_move(True)
+        if move is not None:
+            self.add_last_move(move, False)
+            return move
+        head = Node('O', bot=self)
+        head.set_value(self.minimax(head,0, True, float("-inf"), float("inf")))
+        self.add_last_move(self.step, False)
+        return self.step
