@@ -1,14 +1,120 @@
 import random
+from board import Board
+import copy
+
+
+class Node:
+    def __init__(self, player, step=None, board=None):
+        self.value = float("-inf")
+        self.step = step
+        self.player = player
+        if step is not None:
+            Board.set_position(self.step[0], self.step[1], player)
+        self.board = board
+
+    def set_value(self, val):
+        self.value = val
+
+    def get_board(self):
+        return self.board
+
+    def set_step(self, step):
+        self.step = step
+
+    def get_player(self):
+        return self.player
 
 
 class Bot:
-    # TODO: Cache subtree
-    # TODO: add a function to check for off the board moves when choosing a move, to have the correct index
-
     def __init__(self, board):
         self.board = board
         self.x_index_chains = []
         self.o_index_chains = []
+
+    def collect_possible_moves(self, board, is_player_o):
+        possible_moves = []
+        # consider open 4 'O'
+        if self.check_for_4_move('O' if is_player_o else 'X'):
+            possible_moves.append(self.step)
+            return possible_moves
+        # consider open 4 'X'
+        if self.check_for_4_move('X' if is_player_o else 'O'):
+            possible_moves.append(self.step)
+            return possible_moves
+        # consider open 3
+        possible_moves.extend(list(self.get_all_chain_edge_moves(3, 'O' if is_player_o else 'X')))
+        # consider open 3
+        if len(possible_moves) == 0:
+            possible_moves.extend(list(self.get_all_chain_edge_moves(3, 'X' if is_player_o else 'O')))
+        # consider every other possible moves
+        if len(possible_moves) == 0:
+            i = 3
+            while i > 0:
+                possible_moves.extend(list(self.get_all_chain_edge_moves(i, 'O' if is_player_o else 'X')))
+                i -= 1
+            possible_moves.extend(list(self.get_all_chain_edge_moves(1, 'X' if is_player_o else 'O')))
+        possible_moves = list(filter(lambda item: item is not None, possible_moves))
+        return self.drop_duplicates(possible_moves)
+
+    def heuristic(self, node, is_player_o):
+        self.board = node.get_board()
+        node_value = 0
+        # collect points for open 4 rows
+        node_value += len(list(filter(lambda item: item is not None, self.get_all_chain_edge_moves(4, 'O' if is_player_o else 'X')))) * 16
+        node_value -= len(list(filter(lambda item: item is not None, self.get_all_chain_edge_moves(4, 'X' if is_player_o else 'O')))) * 16
+        # collect points for all 4
+        node_value += len(self.get_all_open_chains(4, 'O' if is_player_o else 'X')) * 8
+        node_value -= len(self.get_all_open_chains(4, 'X' if is_player_o else 'O')) * 8
+        # collect points for 3 emp-emp
+        node_value += len(self.get_all_open_chains(3, 'O' if is_player_o else 'X')) * 4
+        node_value -= len(self.get_all_open_chains(3, 'X' if is_player_o else 'O')) * 4
+        node_value += len(list(filter(lambda item: item is not None, self.get_all_open_chains(2, 'O' if is_player_o else 'X')))) * 2
+        return node_value
+
+    @staticmethod
+    def drop_duplicates(list_in):
+        tuple_list = [tuple(item) for item in list_in]
+        unique_list = list(set(tuple_list))
+        unique_list = [list(item) for item in unique_list]
+        return unique_list
+
+    def minimax(self, node, depth, isMaximizingPlayer, alpha, beta):
+        # if someone won return a corresponding inf value else return heuristic
+        if node.get_board().check_for_winner(node.get_player()):
+            if node.get_player() == 'O':
+                return float('+inf')
+            else:
+                return float('-inf')
+        elif depth == 5:
+            return self.heuristic(node, isMaximizingPlayer)
+
+        if isMaximizingPlayer:
+            best_val = float('-inf')
+            all_possible_moves = copy.deepcopy(self.collect_possible_moves(node.get_board(), True))
+            for one_move in all_possible_moves:
+                new_node = Node('O', one_move, board=copy.deepcopy(node.get_board()))
+                value = self.minimax(new_node, depth + 1, False, alpha, beta)
+                best_val = max(best_val, value)
+                if value >= best_val and depth == 0:
+                    self.step = one_move
+                alpha = max(alpha, best_val)
+                if beta <= alpha:
+                    break
+            return best_val
+
+        else:
+            best_val = float('+inf')
+            all_possible_moves = copy.deepcopy(self.collect_possible_moves(node.get_board(), False))
+            for one_move in all_possible_moves:
+                new_node = Node('X', one_move, board=copy.deepcopy(node.get_board()))
+                value = self.minimax(new_node, depth + 1, True, alpha, beta)
+                best_val = min(best_val, value)
+                beta = min(beta, best_val)
+                if beta <= alpha:
+                    break
+            return best_val
+    # TODO: Cache subtree
+    # TODO: add a function to check for off the board moves when choosing a move, to have the correct index
 
     def recalculate_chains(self):
         """
@@ -310,6 +416,93 @@ class Bot:
                 if len(chain) == length:
                     return i
         return None
+    
+    def get_all_open_chains(self, length, is_player_x):
+        """
+        Checks is there is a chain with desired length for the player, return the first one
+        :param length: length of the chain
+        :param is_player_x: boolean indicating whether the player is X
+        :return: index of all chains, or None if there is no chain with desired length
+        """
+        indexes = set()
+        if is_player_x:
+            for i, chain in enumerate(self.x_index_chains):
+                if len(chain) == length:
+                    indexes.add(i)
+        else:
+            for i, chain in enumerate(self.o_index_chains):
+                if len(chain) == length:
+                    indexes.add(i)
+        return indexes
+
+    def get_all_chain_edge_moves(self, lenght, is_player_x):
+        """
+        Checks is there is a chain with desired length for the
+        player, return the moves
+        :param lenght: length of the chain
+        :param is_player_x: boolean indicating whether the player is
+        """
+        indexes_of_chains = self.get_all_open_chains(lenght, is_player_x)
+        moves = set()
+        for index in indexes_of_chains:
+            # Bot can win with 4 long chain
+            # Player can win with 4 win chain, bot has to block it
+            chain = sorted(self.x_index_chains[index] if is_player_x else self.o_index_chains[index])
+            direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
+            negative_closing_index = chain[0] - direction
+            positive_closing_index = chain[-1] + direction
+            blocked_by_edge = self.is_chain_blocked_by_edge(direction, chain[0], chain[-1])
+            if not blocked_by_edge:
+                if self.board.is_index_occupied(negative_closing_index):
+                    moves.add(self.board.calculate_position_from_index(positive_closing_index))
+                    if self.board.is_index_occupied(positive_closing_index):
+                        raise RuntimeError
+                else:
+                    moves.add(self.board.calculate_position_from_index(negative_closing_index))
+            else:
+                if direction == 1:
+                    # With horizontal direction this is the only possible move,
+                    # positive_closing_index should be free, otherwise it would have been filtered out previously
+                    # by vetting the closed chains
+                    # TODO: new index off the edge check
+                    moves.add(self.board.calculate_position_from_index(positive_closing_index))
+                    if self.board.is_index_occupied(positive_closing_index):
+                        print("There is a bug in check_for_4_move functions horizontal move searching")
+                        raise RuntimeError
+                elif direction == self.board.size - 1:
+                    # With vertical direction this is the only possible move,
+                    # positive_closing_index should be free, otherwise it would have been filtered out previously
+                    # by vetting the closed chains
+                    # TODO: new index off the edge check
+                    if self.is_index_in_row1(negative_closing_index):
+                        moves.add(self.board.calculate_position_from_index(positive_closing_index))
+                        if self.board.is_index_occupied(positive_closing_index):
+                            print("There is a bug in check_for_4_move functions diagonal down-up move searching")
+                            raise RuntimeError
+                    else:
+                        moves.add(self.board.calculate_position_from_index(negative_closing_index))
+                        if self.board.is_index_occupied(negative_closing_index):
+                            print("There is a bug in check_for_4_move functions diagonal down-up move searching")
+                            raise RuntimeError
+                elif direction == self.board.size:
+                    # With vertical direction this is the only possible move,
+                    # positive_closing_index should be free, otherwise it would have been filtered out previously
+                    # by vetting the closed chains
+                    # TODO: new index off the edge check
+                    moves.add(self.board.calculate_position_from_index(positive_closing_index))
+                    if self.board.is_index_occupied(positive_closing_index):
+                        print("There is a bug in check_for_4_move functions vertical move searching")
+                        raise RuntimeError
+                elif direction == self.board.size + 1:
+                    # With diagonal up-down direction this is the only possible move,
+                    # positive_closing_index should be free, otherwise it would have been filtered out previously
+                    # by vetting the closed chains
+                    # TODO: new index off the edge check
+                    moves.add(self.board.calculate_position_from_index(positive_closing_index))
+                    if self.board.is_index_occupied(positive_closing_index):
+                        print("There is a bug in check_for_4_move functions diagonal up-down move searching")
+                        raise RuntimeError
+        return moves
 
     def check_for_4_move(self, is_player_x):
         """
@@ -389,6 +582,8 @@ class Bot:
         if move is None:
             # Check for opponent win condition to block
             move = self.check_for_4_move(True)
+        if move is not None:
+            return move
 
         # TODO: make bot chose move
         move = (random.randint(1, 20), random.randint(1, 20))
