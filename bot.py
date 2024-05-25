@@ -4,12 +4,15 @@ import copy
 
 
 class Node:
-    def __init__(self, is_player_x, step=None, bot=None):
+    def __init__(self, is_player_x, index=None, bot=None):
         self.value = float("-inf")
-        self.step = step
+        if index is not None:
+            self.step = bot.board.calculate_position_from_index(index)
+            bot.add_last_move(self.step, is_player_x)
+            bot.board.move(self.step[0], self.step[1], is_player_x)
+        else:
+            self.step = None
         self.is_player_x = is_player_x
-        if step is not None:
-            bot.add_last_move(step, is_player_x)
         self.bot = bot
 
     def set_value(self, val):
@@ -60,11 +63,8 @@ class Bot:
             possible_moves.extend(list(self.get_all_chain_edge_moves(3, not is_player_x)))
         # consider every other possible moves
         if len(possible_moves) == 0:
-            i = 2
-            while i > 0:
-                possible_moves.extend(list(self.get_all_chain_edge_moves(i, is_player_x)))
-                i -= 1
-            possible_moves.extend(self.get_available_moves_around_1_long_chains(not is_player_x))
+            possible_moves.extend(list(self.get_all_chain_edge_moves(2, is_player_x)))
+            possible_moves.extend(self.get_available_moves_around_1_long_chains())
         possible_moves = list(filter(lambda item: item is not None, possible_moves))
         return self.drop_duplicates(possible_moves)
 
@@ -92,10 +92,7 @@ class Bot:
 
     @staticmethod
     def drop_duplicates(list_in):
-        tuple_list = [tuple(item) for item in list_in]
-        unique_list = list(set(tuple_list))
-        unique_list = [list(item) for item in unique_list]
-        return unique_list
+        return list(set(list_in))
 
     def minimax(self, node, depth, is_maximizing_player, alpha, beta):
         # if someone won return a corresponding inf value else return heuristic
@@ -106,13 +103,13 @@ class Bot:
                 else:
                     return float('-inf')
             elif depth == 5:
-                return self.heuristic(node)
+                return node.bot.heuristic(node)
 
         if is_maximizing_player:
             best_val = float('-inf')
-            all_possible_moves = copy.deepcopy(self.collect_possible_moves(False))
+            all_possible_moves = copy.deepcopy(node.bot.collect_possible_moves(False))
             for one_move in all_possible_moves:
-                new_node = Node(False, one_move, bot=copy.deepcopy(self))
+                new_node = Node(False, one_move, bot=copy.deepcopy(node.bot))
                 value = self.minimax(new_node, depth + 1, False, alpha, beta)
                 best_val = max(best_val, value)
                 if value >= best_val and depth == 0:
@@ -124,9 +121,9 @@ class Bot:
 
         else:
             best_val = float('+inf')
-            all_possible_moves = copy.deepcopy(self.collect_possible_moves(True))
+            all_possible_moves = copy.deepcopy(node.bot.collect_possible_moves(True))
             for one_move in all_possible_moves:
-                new_node = Node(True, one_move, bot=copy.deepcopy(self))
+                new_node = Node(True, one_move, bot=copy.deepcopy(node.bot))
                 value = self.minimax(new_node, depth + 1, True, alpha, beta)
                 best_val = min(best_val, value)
                 beta = min(beta, best_val)
@@ -530,21 +527,19 @@ class Bot:
                         raise RuntimeError
         return moves
 
-    def get_available_moves_around_1_long_chains(self, is_player_x):
+    def get_available_moves_around_1_long_chains(self):
         """
         Calculates all the available moves around 1 long chains
         :return: list of all available moves around 1 long chains, returns an empty list if there is none
         """
         one_longs = []
         moves = set()
-        if is_player_x:
-            for chain in self.x_index_chains:
-                if len(chain) == 1:
-                    one_longs.append(list(chain)[0])
-        else:
-            for chain in self.o_index_chains:
-                if len(chain) == 1:
-                    one_longs.append(list(chain)[0])
+        for chain in self.x_index_chains:
+            if len(chain) == 1:
+                one_longs.append(list(chain)[0])
+        for chain in self.o_index_chains:
+            if len(chain) == 1:
+                one_longs.append(list(chain)[0])
         if len(one_longs) > 0:
             for index in one_longs:
                 moves = moves.union(self.board.calculate_true_neighbouring_indexes(index))
