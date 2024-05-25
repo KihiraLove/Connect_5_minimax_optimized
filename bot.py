@@ -49,7 +49,7 @@ class Bot:
             possible_moves.pop(0)
         # consider open 4 'X' or 'X'
         possible_moves.append(self.check_for_4_move(not is_player_x))
-        if  possible_moves[0] is not None:
+        if possible_moves[0] is not None:
             return possible_moves
         else:
             possible_moves.pop(0)
@@ -194,7 +194,7 @@ class Bot:
                 neighbour_count = len(neighbours_of_neighbour)
                 if neighbour_count == len(self.board.o_indexes.intersection(
                         neighbours_of_neighbour) if is_opponent_x else self.board.x_indexes.intersection(
-                        neighbours_of_neighbour)):
+                    neighbours_of_neighbour)):
                     deletable_indexes.append(i)
                 continue
             chain = sorted(index_chain)
@@ -461,6 +461,7 @@ class Bot:
         return indexes
 
     def get_all_chain_edge_moves(self, lenght, is_player_x):
+        #TODO fix it so it can find 1 long chains
         """
         Checks is there is a chain with desired length for the
         player, return all the moves
@@ -612,7 +613,7 @@ class Bot:
         if move is not None:
             self.add_last_move(move, False)
             return move
-        head = Node('O', bot=self)
+        head = Node(False, bot=self)
         head.set_value(self.minimax(head, 0, True, float("-inf"), float("inf")))
         self.add_last_move(self.step, False)
         return self.step
