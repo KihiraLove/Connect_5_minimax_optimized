@@ -284,6 +284,18 @@ class TestBot(unittest.TestCase):
         self.bot.vet_closed_chains(398, 399, True)
         self.assertEqual([], self.bot.x_index_chains)
 
+    def test_get_available_moves_around_1_long_chains(self):
+        self.bot.x_index_chains = [{0}, {19}, {380}, {399}]
+        self.bot.o_index_chains = [{1}, {18}, {381}, {398}]
+        self.board.x_indexes = {0, 19, 380, 399}
+        self.board.o_indexes = {1, 18, 381, 398}
+        expected_x = sorted([20, 21, 38, 39, 360, 361, 378, 379])
+        expected_o = sorted([2, 17, 20, 21, 22, 37, 38, 39, 360, 361, 362, 377, 378, 379, 382, 397])
+        actual_x = sorted(self.bot.get_available_moves_around_1_long_chains(True))
+        actual_o = sorted(self.bot.get_available_moves_around_1_long_chains(False))
+        self.assertEqual(expected_x, actual_x)
+        self.assertEqual(expected_o, actual_o)
+
 
 class TestBoard(unittest.TestCase):
 
