@@ -536,7 +536,7 @@ class Bot:
         :return: list of all available moves around 1 long chains, returns an empty list if there is none
         """
         one_longs = []
-        moves = {}
+        moves = set()
         for chain in self.x_index_chains:
             if len(chain) == 1:
                 one_longs.append(list(chain)[0])
