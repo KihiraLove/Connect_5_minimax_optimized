@@ -64,7 +64,7 @@ class Bot:
             while i > 0:
                 possible_moves.extend(list(self.get_all_chain_edge_moves(i, is_player_x)))
                 i -= 1
-            possible_moves.extend(list(self.get_all_chain_edge_moves(1, not is_player_x)))
+            possible_moves.extend(self.get_available_moves_around_1_long_chains(not is_player_x))
         possible_moves = list(filter(lambda item: item is not None, possible_moves))
         return self.drop_duplicates(possible_moves)
 
@@ -530,19 +530,21 @@ class Bot:
                         raise RuntimeError
         return moves
 
-    def get_available_moves_around_1_long_chains(self):
+    def get_available_moves_around_1_long_chains(self, is_player_x):
         """
         Calculates all the available moves around 1 long chains
         :return: list of all available moves around 1 long chains, returns an empty list if there is none
         """
         one_longs = []
         moves = set()
-        for chain in self.x_index_chains:
-            if len(chain) == 1:
-                one_longs.append(list(chain)[0])
-        for chain in self.o_index_chains:
-            if len(chain) == 1:
-                one_longs.append(list(chain)[0])
+        if is_player_x:
+            for chain in self.x_index_chains:
+                if len(chain) == 1:
+                    one_longs.append(list(chain)[0])
+        else:
+            for chain in self.o_index_chains:
+                if len(chain) == 1:
+                    one_longs.append(list(chain)[0])
         if len(one_longs) > 0:
             for index in one_longs:
                 moves = moves.union(self.board.calculate_true_neighbouring_indexes(index))
