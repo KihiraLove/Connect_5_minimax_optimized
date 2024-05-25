@@ -525,7 +525,10 @@ class Bot:
                     if self.board.is_index_occupied(positive_closing_index):
                         print("There is a bug in check_for_4_move functions diagonal up-down move searching")
                         raise RuntimeError
-        return moves
+        indexes_of_moves = []
+        for move in moves:
+            indexes_of_moves.append(self.board.calculate_index_from_position(move[0], move[1]))
+        return indexes_of_moves
 
     def get_available_moves_around_1_long_chains(self):
         """
@@ -631,5 +634,6 @@ class Bot:
             return move
         head = Node(False, bot=self)
         head.set_value(self.minimax(head, 0, True, float("-inf"), float("inf")))
-        self.add_last_move(self.step, False)
-        return self.step
+        step_tuple = self.board.calculate_position_from_index(self.step)
+        self.add_last_move(step_tuple, False)
+        return step_tuple
