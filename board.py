@@ -33,6 +33,23 @@ class Board:
             new_indexes.add(new_index)
         return new_indexes
 
+    def get_all_possible_moves_in_range(self, move_range=1):
+        if move_range > 2 or move_range < 1:
+            raise RuntimeError
+        all_moves = {}
+        for index in self.x_indexes:
+            all_moves = all_moves.union(self.calculate_true_neighbouring_indexes(index))
+        for index in self.o_indexes:
+            all_moves = all_moves.union(self.calculate_true_neighbouring_indexes(index))
+        if move_range == 1:
+            all_moves = (all_moves - self.x_indexes) - self.o_indexes
+            return all_moves
+        working_set = all_moves.copy()
+        for index in all_moves:
+            working_set = working_set.union(self.calculate_true_neighbouring_indexes(index))
+        working_set = (working_set - self.x_indexes) - self.o_indexes
+        return working_set
+
     def calculate_index_from_position(self, x, y):
         """
         Calculates the index of the move from board position
