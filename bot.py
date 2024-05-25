@@ -32,44 +32,62 @@ class Bot:
         self.o_index_chains = []
         self.step = None
 
-    def collect_possible_moves(self, board, is_player_o):
+    def collect_possible_moves(self, is_player_x):
+        """
+        :param is_player_x: if is_maximizing_player:
+                                False
+                            else:
+                                True
+        :return: all the considered possible moves in a given state
+        """
         possible_moves = []
-        # consider open 4 'O'
-        if self.check_for_4_move('O' if is_player_o else 'X'):
-            possible_moves.append(self.step)
+        # consider open 4 'O' or 'X'
+        possible_moves.append(self.check_for_4_move(is_player_x))
+        if possible_moves[0] is not None:
             return possible_moves
-        # consider open 4 'X'
-        if self.check_for_4_move('X' if is_player_o else 'O'):
-            possible_moves.append(self.step)
+        else:
+            possible_moves.pop(0)
+        # consider open 4 'X' or 'X'
+        possible_moves.append(self.check_for_4_move(not is_player_x))
+        if  possible_moves[0] is not None:
             return possible_moves
+        else:
+            possible_moves.pop(0)
         # consider open 3
-        possible_moves.extend(list(self.get_all_chain_edge_moves(3, 'O' if is_player_o else 'X')))
+        possible_moves.extend(list(self.get_all_chain_edge_moves(3, is_player_x)))
         # consider open 3
         if len(possible_moves) == 0:
-            possible_moves.extend(list(self.get_all_chain_edge_moves(3, 'X' if is_player_o else 'O')))
+            possible_moves.extend(list(self.get_all_chain_edge_moves(3, not is_player_x)))
         # consider every other possible moves
         if len(possible_moves) == 0:
-            i = 3
+            i = 2
             while i > 0:
-                possible_moves.extend(list(self.get_all_chain_edge_moves(i, 'O' if is_player_o else 'X')))
+                possible_moves.extend(list(self.get_all_chain_edge_moves(i, is_player_x)))
                 i -= 1
-            possible_moves.extend(list(self.get_all_chain_edge_moves(1, 'X' if is_player_o else 'O')))
+            possible_moves.extend(list(self.get_all_chain_edge_moves(1, not is_player_x)))
         possible_moves = list(filter(lambda item: item is not None, possible_moves))
         return self.drop_duplicates(possible_moves)
 
-    def heuristic(self, node, is_player_o):
+    def heuristic(self, node):
+        """
+        Heuristic function for finding the heuristic value of a node.
+        :param node: The node to find the heuristic value for.
+        :return: The heuristic value of a node.
+        """
         self.board = node.get_board()
         node_value = 0
         # collect points for open 4 rows
-        node_value += len(list(filter(lambda item: item is not None, self.get_all_chain_edge_moves(4, 'O' if is_player_o else 'X')))) * 16
-        node_value -= len(list(filter(lambda item: item is not None, self.get_all_chain_edge_moves(4, 'X' if is_player_o else 'O')))) * 16
+        node_value += len(self.get_all_open_chains(4, False)) * 16
+        node_value -= len(self.get_all_open_chains(4, True)) * 16
         # collect points for all 4
-        node_value += len(self.get_all_open_chains(4, 'O' if is_player_o else 'X')) * 8
-        node_value -= len(self.get_all_open_chains(4, 'X' if is_player_o else 'O')) * 8
+        node_value += len(list(
+            filter(lambda item: item is not None, self.get_all_chain_edge_moves(4, False)))) * 8
+        node_value -= len(list(
+            filter(lambda item: item is not None, self.get_all_chain_edge_moves(4, True)))) * 8
         # collect points for 3 emp-emp
-        node_value += len(self.get_all_open_chains(3, 'O' if is_player_o else 'X')) * 4
-        node_value -= len(self.get_all_open_chains(3, 'X' if is_player_o else 'O')) * 4
-        node_value += len(list(filter(lambda item: item is not None, self.get_all_open_chains(2, 'O' if is_player_o else 'X')))) * 2
+        node_value += len(self.get_all_open_chains(3, False)) * 4
+        node_value -= len(self.get_all_open_chains(3, True)) * 4
+        node_value += len(list(filter(lambda item: item is not None, self.get_all_open_chains(2, False)))) * 2
         return node_value
 
     @staticmethod
@@ -79,7 +97,7 @@ class Bot:
         unique_list = [list(item) for item in unique_list]
         return unique_list
 
-    def minimax(self, node, depth, isMaximizingPlayer, alpha, beta):
+    def minimax(self, node, depth, is_maximizing_player, alpha, beta):
         # if someone won return a corresponding inf value else return heuristic
         if node.step is not None:
             if node.get_board().check_for_win(node.step[0], node.step[1], node.get_player()):
@@ -88,11 +106,11 @@ class Bot:
                 else:
                     return float('-inf')
             elif depth == 5:
-                return self.heuristic(node, isMaximizingPlayer)
+                return self.heuristic(node)
 
-        if isMaximizingPlayer:
+        if is_maximizing_player:
             best_val = float('-inf')
-            all_possible_moves = copy.deepcopy(self.collect_possible_moves(node.get_board(), True))
+            all_possible_moves = copy.deepcopy(self.collect_possible_moves(False))
             for one_move in all_possible_moves:
                 new_node = Node(False, one_move, bot=copy.deepcopy(self))
                 value = self.minimax(new_node, depth + 1, False, alpha, beta)
@@ -106,7 +124,7 @@ class Bot:
 
         else:
             best_val = float('+inf')
-            all_possible_moves = copy.deepcopy(self.collect_possible_moves(node.get_board(), False))
+            all_possible_moves = copy.deepcopy(self.collect_possible_moves(True))
             for one_move in all_possible_moves:
                 new_node = Node(True, one_move, bot=copy.deepcopy(self))
                 value = self.minimax(new_node, depth + 1, True, alpha, beta)
@@ -115,6 +133,7 @@ class Bot:
                 if beta <= alpha:
                     break
             return best_val
+
     # TODO: Cache subtree
     # TODO: add a function to check for off the board moves when choosing a move, to have the correct index
 
@@ -170,9 +189,12 @@ class Bot:
                 continue
             if len(index_chain) == 1:
                 # delete 1 long chain if blocked from all sides
-                neighbours_of_neighbour = self.board.calculate_true_neighbouring_indexes(neighbour) # all possible neighbours of neighbour
+                neighbours_of_neighbour = self.board.calculate_true_neighbouring_indexes(
+                    neighbour)  # all possible neighbours of neighbour
                 neighbour_count = len(neighbours_of_neighbour)
-                if neighbour_count == len(self.board.o_indexes.intersection(neighbours_of_neighbour) if is_opponent_x else self.board.x_indexes.intersection(neighbours_of_neighbour)):
+                if neighbour_count == len(self.board.o_indexes.intersection(
+                        neighbours_of_neighbour) if is_opponent_x else self.board.x_indexes.intersection(
+                        neighbours_of_neighbour)):
                     deletable_indexes.append(i)
                 continue
             chain = sorted(index_chain)
@@ -306,7 +328,8 @@ class Bot:
             else:
                 # Create a new chain and add it to the list, if we form a new chain
                 # with an index, from all already existing chain
-                chains_to_be_added.append(({index, neighbour}, self.calculate_direction_of_neighbours(index, neighbour)))
+                chains_to_be_added.append(
+                    ({index, neighbour}, self.calculate_direction_of_neighbours(index, neighbour)))
         index_offset = 0
         for chain, direction in chains_to_be_added:
             chain_index = len(self.x_index_chains if is_player_x else self.o_index_chains) + index_offset
@@ -418,10 +441,10 @@ class Bot:
                 if len(chain) == length:
                     return i
         return None
-    
+
     def get_all_open_chains(self, length, is_player_x):
         """
-        Checks is there is a chain with desired length for the player, return the first one
+        Checks is there is a chain with desired length for the player, returns all of them
         :param length: length of the chain
         :param is_player_x: boolean indicating whether the player is X
         :return: index of all chains, or None if there is no chain with desired length
@@ -440,7 +463,7 @@ class Bot:
     def get_all_chain_edge_moves(self, lenght, is_player_x):
         """
         Checks is there is a chain with desired length for the
-        player, return the moves
+        player, return all the moves
         :param lenght: length of the chain
         :param is_player_x: boolean indicating whether the player is
         """
@@ -590,6 +613,6 @@ class Bot:
             self.add_last_move(move, False)
             return move
         head = Node('O', bot=self)
-        head.set_value(self.minimax(head,0, True, float("-inf"), float("inf")))
+        head.set_value(self.minimax(head, 0, True, float("-inf"), float("inf")))
         self.add_last_move(self.step, False)
         return self.step
