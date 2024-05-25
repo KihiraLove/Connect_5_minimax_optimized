@@ -289,10 +289,12 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains = [{1}, {18}, {381}, {398}]
         self.board.x_indexes = {0, 19, 380, 399}
         self.board.o_indexes = {1, 18, 381, 398}
-        expected = sorted([2, 17, 20, 21, 22, 37, 38, 39, 360, 361, 362, 377, 378, 379, 382, 397])
-        actual = sorted(self.bot.get_available_moves_around_1_long_chains())
-        print(actual)
-        self.assertEqual(expected, actual)
+        expected_x = sorted([20, 21, 38, 39, 360, 361, 378, 379])
+        expected_o = sorted([2, 17, 20, 21, 22, 37, 38, 39, 360, 361, 362, 377, 378, 379, 382, 397])
+        actual_x = sorted(self.bot.get_available_moves_around_1_long_chains(True))
+        actual_o = sorted(self.bot.get_available_moves_around_1_long_chains(False))
+        self.assertEqual(expected_x, actual_x)
+        self.assertEqual(expected_o, actual_o)
 
 
 class TestBoard(unittest.TestCase):
