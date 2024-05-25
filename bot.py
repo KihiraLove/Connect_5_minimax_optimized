@@ -538,17 +538,16 @@ class Bot:
         one_longs = []
         moves = {}
         for chain in self.x_index_chains:
-            if len(chain):
+            if len(chain) == 1:
                 one_longs.append(list(chain)[0])
         for chain in self.o_index_chains:
-            if len(chain):
+            if len(chain) == 1:
                 one_longs.append(list(chain)[0])
         if len(one_longs) > 0:
             for index in one_longs:
                 moves = moves.union(self.board.calculate_true_neighbouring_indexes(index))
             moves = (moves - self.board.x_indexes) - self.board.o_indexes
         return list(moves)
-
 
     def check_for_4_move(self, is_player_x):
         """
