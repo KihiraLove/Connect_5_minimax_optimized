@@ -47,30 +47,31 @@ class Bot:
                                 True
         :return: all the considered possible moves in a given state
         """
-        possible_moves = []
+        possible_indexes = []
         # consider open 4 'O' or 'X'
-        possible_moves.append(self.check_for_4_move(is_player_x))
-        if possible_moves[0] is not None:
-            return possible_moves
+        possible_indexes.append(self.check_for_4_move(is_player_x))
+        if possible_indexes[0] is not None:
+            # this is horrible but the check_for_4_move return a move and not an index...
+            return [self.board.calculate_index_from_position(possible_indexes[0][0], possible_indexes[0][1])]
         else:
-            possible_moves.pop(0)
+            possible_indexes.pop(0)
         # consider open 4 'X' or 'X'
-        possible_moves.append(self.check_for_4_move(not is_player_x))
-        if possible_moves[0] is not None:
-            return possible_moves
+        possible_indexes.append(self.check_for_4_move(not is_player_x))
+        if possible_indexes[0] is not None:
+            return [self.board.calculate_index_from_position(possible_indexes[0][0], possible_indexes[0][1])]
         else:
-            possible_moves.pop(0)
+            possible_indexes.pop(0)
         # consider open 3
-        possible_moves.extend(list(self.get_all_chain_edge_indexes(3, is_player_x)))
+        possible_indexes.extend(list(self.get_all_chain_edge_indexes(3, is_player_x)))
         # consider open 3
-        if len(possible_moves) == 0:
-            possible_moves.extend(list(self.get_all_chain_edge_indexes(3, not is_player_x)))
+        if len(possible_indexes) == 0:
+            possible_indexes.extend(list(self.get_all_chain_edge_indexes(3, not is_player_x)))
         # consider every other possible moves
-        if len(possible_moves) == 0:
-            possible_moves.extend(list(self.get_all_chain_edge_indexes(2, is_player_x)))
-            possible_moves.extend(self.get_available_moves_around_1_long_chains())
-        possible_moves = list(filter(lambda item: item is not None, possible_moves))
-        return self.drop_duplicates(possible_moves)
+        if len(possible_indexes) == 0:
+            possible_indexes.extend(list(self.get_all_chain_edge_indexes(2, is_player_x)))
+            possible_indexes.extend(self.get_available_moves_around_1_long_chains())
+        possible_indexes = list(filter(lambda item: item is not None, possible_indexes))
+        return self.drop_duplicates(possible_indexes)
 
     def heuristic(self, node):
         """
@@ -539,7 +540,7 @@ class Bot:
         if index_of_chain is not None:
             # Bot can win with 4 long chain
             # Player can win with 4 win chain, bot has to block it
-            chain = sorted(self.x_index_chains[index_of_chain] if is_player_x else self.x_index_chains[index_of_chain])
+            chain = sorted(self.x_index_chains[index_of_chain] if is_player_x else self.o_index_chains[index_of_chain])
             direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - direction
             positive_closing_index = chain[-1] + direction
