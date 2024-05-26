@@ -376,9 +376,15 @@ class Bot:
         :param is_player_x: boolean indicating whether the player is X or not
         """
         removable_chains = []
-        a = len(changed_chains)
-        b = changed_chains[len(changed_chains) - 1]
-        print(changed_chains)
+        # this treats the symptom but the root cause is still there
+        new_changed_chains = []
+        for i in range(0, len(changed_chains) - 1):
+            if changed_chains[i][0] >= len(self.x_index_chains if is_player_x else self.o_index_chains):
+                pass
+            else:
+                new_changed_chains.append(changed_chains[i])
+        changed_chains = copy.deepcopy(new_changed_chains)
+        # deep copy to help debugging if needed
         while len(changed_chains) > 1:
             chain_index, chain_direction = changed_chains.pop()
             for index, direction in changed_chains:
