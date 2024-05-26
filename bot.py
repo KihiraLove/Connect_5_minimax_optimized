@@ -34,8 +34,12 @@ class Bot:
         self.x_index_chains = []
         self.o_index_chains = []
         self.step = None
+        self.three_x_count = 0
+        self.three_o_count = 0
+        self.four_x_count = 0
+        self.four_o_count = 0
 
-    def collect_possible_moves(self, is_player_x):
+    def collect_possible_indexes(self, is_player_x):
         """
         :param is_player_x: if is_maximizing_player:
                                 False
@@ -57,13 +61,13 @@ class Bot:
         else:
             possible_moves.pop(0)
         # consider open 3
-        possible_moves.extend(list(self.get_all_chain_edge_moves(3, is_player_x)))
+        possible_moves.extend(list(self.get_all_chain_edge_indexes(3, is_player_x)))
         # consider open 3
         if len(possible_moves) == 0:
-            possible_moves.extend(list(self.get_all_chain_edge_moves(3, not is_player_x)))
+            possible_moves.extend(list(self.get_all_chain_edge_indexes(3, not is_player_x)))
         # consider every other possible moves
         if len(possible_moves) == 0:
-            possible_moves.extend(list(self.get_all_chain_edge_moves(2, is_player_x)))
+            possible_moves.extend(list(self.get_all_chain_edge_indexes(2, is_player_x)))
             possible_moves.extend(self.get_available_moves_around_1_long_chains())
         possible_moves = list(filter(lambda item: item is not None, possible_moves))
         return self.drop_duplicates(possible_moves)
@@ -78,12 +82,16 @@ class Bot:
         node_value = 0
         # collect points for open 4 rows
         node_value += len(self.get_all_open_chains(4, False)) * 16
+        node_value += self.four_o_count * 16
         node_value -= len(self.get_all_open_chains(4, True)) * 16
+        node_value -= self.three_x_count * 16
         # collect points for all 4
         node_value += len(list(
-            filter(lambda item: item is not None, self.get_all_chain_edge_moves(4, False)))) * 8
+            filter(lambda item: item is not None, self.get_all_chain_edge_indexes(4, False)))) * 8
+        node_value += self.three_o_count * 8
         node_value -= len(list(
-            filter(lambda item: item is not None, self.get_all_chain_edge_moves(4, True)))) * 8
+            filter(lambda item: item is not None, self.get_all_chain_edge_indexes(4, True)))) * 8
+        node_value -= self.four_x_count * 8
         # collect points for 3 emp-emp
         node_value += len(self.get_all_open_chains(3, False)) * 4
         node_value -= len(self.get_all_open_chains(3, True)) * 4
@@ -102,18 +110,18 @@ class Bot:
                     return float('+inf')
                 else:
                     return float('-inf')
-            elif depth == 5:
+            elif depth == 10:
                 return node.bot.heuristic(node)
 
         if is_maximizing_player:
             best_val = float('-inf')
-            all_possible_moves = copy.deepcopy(node.bot.collect_possible_moves(False))
-            for one_move in all_possible_moves:
-                new_node = Node(False, one_move, bot=copy.deepcopy(node.bot))
+            all_possible_indexes = copy.deepcopy(node.bot.collect_possible_indexes(False))
+            for one_index in all_possible_indexes:
+                new_node = Node(False, one_index, bot=copy.deepcopy(node.bot))
                 value = self.minimax(new_node, depth + 1, False, alpha, beta)
                 best_val = max(best_val, value)
                 if value >= best_val and depth == 0:
-                    self.step = one_move
+                    self.step = one_index
                 alpha = max(alpha, best_val)
                 if beta <= alpha:
                     break
@@ -121,9 +129,9 @@ class Bot:
 
         else:
             best_val = float('+inf')
-            all_possible_moves = copy.deepcopy(node.bot.collect_possible_moves(True))
-            for one_move in all_possible_moves:
-                new_node = Node(True, one_move, bot=copy.deepcopy(node.bot))
+            all_possible_indexes = copy.deepcopy(node.bot.collect_possible_indexes(True))
+            for one_index in all_possible_indexes:
+                new_node = Node(True, one_index, bot=copy.deepcopy(node.bot))
                 value = self.minimax(new_node, depth + 1, True, alpha, beta)
                 best_val = min(best_val, value)
                 beta = min(beta, best_val)
@@ -191,7 +199,7 @@ class Bot:
                 neighbour_count = len(neighbours_of_neighbour)
                 if neighbour_count == len(self.board.o_indexes.intersection(
                         neighbours_of_neighbour) if is_opponent_x else self.board.x_indexes.intersection(
-                    neighbours_of_neighbour)):
+                        neighbours_of_neighbour)):
                     deletable_indexes.append(i)
                 continue
             chain = sorted(index_chain)
@@ -213,6 +221,27 @@ class Bot:
                 deletable_indexes.append(i)
 
         if len(deletable_indexes) > 0:
+            for one_delete in deletable_indexes:
+                try:
+                    if len(self.o_index_chains[one_delete]) == 3:
+                        self.three_o_count += 1
+                except IndexError:
+                    pass
+                try:
+                    if len(self.x_index_chains[one_delete]) == 3:
+                        self.three_x_count += 1
+                except IndexError:
+                    pass
+                try:
+                    if len(self.o_index_chains[one_delete]) == 4:
+                        self.four_o_count += 1
+                except IndexError:
+                    pass
+                try:
+                    if len(self.x_index_chains[one_delete]) == 4:
+                        self.four_x_count += 1
+                except IndexError:
+                    pass
             self.delete_chain_by_index(deletable_indexes, is_opponent_x)
 
     def is_chain_blocked_by_edge(self, direction, chain_neg_index, chain_pos_index):
@@ -457,78 +486,27 @@ class Bot:
                     indexes.add(i)
         return indexes
 
-    def get_all_chain_edge_moves(self, lenght, is_player_x):
-        #TODO fix it so it can find 1 long chains
+    def get_all_chain_edge_indexes(self, lenght, is_player_x):
         """
         Checks is there is a chain with desired length for the
-        player, return all the moves
-        :param lenght: length of the chain
+        player, return all the indexes
+        :param lenght: length of the chain, must be at least 2
         :param is_player_x: boolean indicating whether the player is
         """
         indexes_of_chains = self.get_all_open_chains(lenght, is_player_x)
-        moves = set()
+        indexes = set()
         for index in indexes_of_chains:
-            # Bot can win with 4 long chain
-            # Player can win with 4 win chain, bot has to block it
             chain = sorted(self.x_index_chains[index] if is_player_x else self.o_index_chains[index])
             direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - direction
             positive_closing_index = chain[-1] + direction
-            blocked_by_edge = self.is_chain_blocked_by_edge(direction, chain[0], chain[-1])
-            if not blocked_by_edge:
-                if self.board.is_index_occupied(negative_closing_index):
-                    moves.add(self.board.calculate_position_from_index(positive_closing_index))
-                    if self.board.is_index_occupied(positive_closing_index):
-                        raise RuntimeError
-                else:
-                    moves.add(self.board.calculate_position_from_index(negative_closing_index))
-            else:
-                if direction == 1:
-                    # With horizontal direction this is the only possible move,
-                    # positive_closing_index should be free, otherwise it would have been filtered out previously
-                    # by vetting the closed chains
-                    # TODO: new index off the edge check
-                    moves.add(self.board.calculate_position_from_index(positive_closing_index))
-                    if self.board.is_index_occupied(positive_closing_index):
-                        print("There is a bug in check_for_4_move functions horizontal move searching")
-                        raise RuntimeError
-                elif direction == self.board.size - 1:
-                    # With vertical direction this is the only possible move,
-                    # positive_closing_index should be free, otherwise it would have been filtered out previously
-                    # by vetting the closed chains
-                    # TODO: new index off the edge check
-                    if self.is_index_in_row1(negative_closing_index):
-                        moves.add(self.board.calculate_position_from_index(positive_closing_index))
-                        if self.board.is_index_occupied(positive_closing_index):
-                            print("There is a bug in check_for_4_move functions diagonal down-up move searching")
-                            raise RuntimeError
-                    else:
-                        moves.add(self.board.calculate_position_from_index(negative_closing_index))
-                        if self.board.is_index_occupied(negative_closing_index):
-                            print("There is a bug in check_for_4_move functions diagonal down-up move searching")
-                            raise RuntimeError
-                elif direction == self.board.size:
-                    # With vertical direction this is the only possible move,
-                    # positive_closing_index should be free, otherwise it would have been filtered out previously
-                    # by vetting the closed chains
-                    # TODO: new index off the edge check
-                    moves.add(self.board.calculate_position_from_index(positive_closing_index))
-                    if self.board.is_index_occupied(positive_closing_index):
-                        print("There is a bug in check_for_4_move functions vertical move searching")
-                        raise RuntimeError
-                elif direction == self.board.size + 1:
-                    # With diagonal up-down direction this is the only possible move,
-                    # positive_closing_index should be free, otherwise it would have been filtered out previously
-                    # by vetting the closed chains
-                    # TODO: new index off the edge check
-                    moves.add(self.board.calculate_position_from_index(positive_closing_index))
-                    if self.board.is_index_occupied(positive_closing_index):
-                        print("There is a bug in check_for_4_move functions diagonal up-down move searching")
-                        raise RuntimeError
-        indexes_of_moves = []
-        for move in moves:
-            indexes_of_moves.append(self.board.calculate_index_from_position(move[0], move[1]))
-        return indexes_of_moves
+            negative_closing_move = self.board.calculate_position_from_index(negative_closing_index)
+            positive_closing_move = self.board.calculate_position_from_index(positive_closing_index)
+            if self.board.is_position_valid_from_pos(negative_closing_move[0], negative_closing_move[1]):
+                indexes.add(negative_closing_index)
+            if self.board.is_position_valid_from_pos(positive_closing_move[0], positive_closing_move[1]):
+                indexes.add(positive_closing_index)
+        return indexes
 
     def get_available_moves_around_1_long_chains(self):
         """
