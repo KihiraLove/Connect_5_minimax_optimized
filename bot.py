@@ -169,12 +169,14 @@ class Bot:
         index = self.board.calculate_index_from_position(move[0], move[1])
         matches = self.board.get_neighbours(index, is_player_x)
         changed_chains_index_direction = []
+        changed_chains_index_direction.clear()
         if len(self.x_index_chains if is_player_x else self.o_index_chains) == 0 or len(matches) == 0:
             self.add_new_chain({index}, is_player_x)
         else:
             for neighbour in matches:
                 changed_chains_index_direction.extend(self.add_index_to_chain(index, neighbour, is_player_x))
         if len(changed_chains_index_direction) > 1:
+            a = len(changed_chains_index_direction)
             self.check_for_overlap(changed_chains_index_direction, is_player_x)
         opponent = not is_player_x
         opponent_matches = self.board.get_neighbours(index, opponent)
@@ -374,7 +376,10 @@ class Bot:
         :param is_player_x: boolean indicating whether the player is X or not
         """
         removable_chains = []
-        while len(changed_chains) != 0:
+        a = len(changed_chains)
+        b = changed_chains[len(changed_chains) - 1]
+        print(changed_chains)
+        while len(changed_chains) > 1:
             chain_index, chain_direction = changed_chains.pop()
             for index, direction in changed_chains:
                 if direction == chain_direction:
