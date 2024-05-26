@@ -111,7 +111,7 @@ class Bot:
                     return float('+inf')
                 else:
                     return float('-inf')
-            elif depth == 10:
+            elif depth == 7:
                 return node.bot.heuristic(node)
 
         if is_maximizing_player:
@@ -540,12 +540,38 @@ class Bot:
         return list(moves)
 
     def check_for_4_move(self, is_player_x):
+        # this has been modifies with high hopes
+        # find the old original function below this function
         """
         Check if the bot has a 4 long chain to win
         or check if the opponent has a 4 long chain that the bot has to block
         :param is_player_x: boolean indicating whether the player is X
         :return: coordinates of the move or None
         """
+        index_of_chain = self.check_for_open_chains(4, is_player_x)
+        if index_of_chain is not None:
+            # Bot can win with 4 long chain
+            # Player can win with 4 win chain, bot has to block it
+            chain = sorted(self.x_index_chains[index_of_chain] if is_player_x else self.o_index_chains[index_of_chain])
+            direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
+            negative_closing_index = chain[0] - direction
+            positive_closing_index = chain[-1] + direction
+            negative_closing_move = self.board.calculate_position_from_index(negative_closing_index)
+            positive_closing_move = self.board.calculate_position_from_index(positive_closing_index)
+            if self.board.is_position_valid_from_pos(negative_closing_move[0], negative_closing_move[1]):
+                return negative_closing_move
+            elif self.board.is_position_valid_from_pos(positive_closing_move[0], positive_closing_move[1]):
+                return positive_closing_move
+        return None
+
+    #TODO this is the old function as it was
+    def check_for_4_move_old(self, is_player_x):
+        """
+                Check if the bot has a 4 long chain to win
+                or check if the opponent has a 4 long chain that the bot has to block
+                :param is_player_x: boolean indicating whether the player is X
+                :return: coordinates of the move or None
+                """
         index_of_chain = self.check_for_open_chains(4, is_player_x)
         move = None
         if index_of_chain is not None:
