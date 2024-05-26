@@ -55,7 +55,7 @@ class Bot:
             return [self.board.calculate_index_from_position(possible_indexes[0][0], possible_indexes[0][1])]
         else:
             possible_indexes.pop(0)
-        # consider open 4 'X' or 'X'
+        # consider open 4 'X' or 'O'
         possible_indexes.append(self.check_for_4_move(not is_player_x))
         if possible_indexes[0] is not None:
             return [self.board.calculate_index_from_position(possible_indexes[0][0], possible_indexes[0][1])]
@@ -393,6 +393,7 @@ class Bot:
                     if self.merge_chains(chain_index, index, is_player_x):
                         removable_chains.append(chain_index)
                     removable_chains.append(index)
+        removable_chains = self.drop_duplicates(removable_chains)
         self.delete_chain_by_index(removable_chains, is_player_x)
 
     def merge_chains(self, index_to_merge_to, index_to_merge, is_player_x):
