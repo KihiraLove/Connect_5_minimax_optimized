@@ -541,7 +541,7 @@ class Bot:
         return list(moves)
 
     def check_for_4_move(self, is_player_x):
-        # this has been modifies with high hopes
+        # this has been modified with high hopes
         # find the old original function below this function
         """
         Check if the bot has a 4 long chain to win
