@@ -386,7 +386,7 @@ class Bot:
                 new_changed_chains.append(changed_chains[i])
         changed_chains = copy.deepcopy(new_changed_chains)
         # deep copy to help debugging if needed
-        while len(changed_chains) > 1:
+        while len(changed_chains) != 0:
             chain_index, chain_direction = changed_chains.pop()
             for index, direction in changed_chains:
                 if direction == chain_direction:
