@@ -224,26 +224,28 @@ class Bot:
 
         if len(deletable_indexes) > 0:
             for one_delete in deletable_indexes:
-                try:
-                    if len(self.o_index_chains[one_delete]) == 3:
-                        self.three_o_count += 1
-                except IndexError:
-                    pass
-                try:
-                    if len(self.x_index_chains[one_delete]) == 3:
-                        self.three_x_count += 1
-                except IndexError:
-                    pass
-                try:
-                    if len(self.o_index_chains[one_delete]) == 4:
-                        self.four_o_count += 1
-                except IndexError:
-                    pass
-                try:
-                    if len(self.x_index_chains[one_delete]) == 4:
-                        self.four_x_count += 1
-                except IndexError:
-                    pass
+                if is_opponent_x:
+                    try:
+                        if len(self.x_index_chains[one_delete]) == 4:
+                            self.four_x_count += 1
+                    except IndexError:
+                        pass
+                    try:
+                        if len(self.x_index_chains[one_delete]) == 3:
+                            self.three_x_count += 1
+                    except IndexError:
+                        pass
+                else:
+                    try:
+                        if len(self.o_index_chains[one_delete]) == 4:
+                            self.four_o_count += 1
+                    except IndexError:
+                        pass
+                    try:
+                        if len(self.o_index_chains[one_delete]) == 3:
+                            self.three_o_count += 1
+                    except IndexError:
+                        pass
             self.delete_chain_by_index(deletable_indexes, is_opponent_x)
 
     def is_chain_blocked_by_edge(self, direction, chain_neg_index, chain_pos_index):
