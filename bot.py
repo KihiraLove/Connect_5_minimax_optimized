@@ -68,11 +68,17 @@ class Bot:
             possible_indexes.extend(list(self.find_double_open_3_chains(not is_player_x)))
         # consider every other possible moves
         if len(possible_indexes) == 0:
+            possible_indexes.extend(list(self.get_all_chain_edge_indexes(3, is_player_x)))
+            possible_indexes.extend(list(self.get_all_chain_edge_indexes(3, not is_player_x)))
             possible_indexes.extend(list(self.get_all_chain_edge_indexes(2, is_player_x)))
             possible_indexes.extend(list(self.get_all_chain_edge_indexes(2, not is_player_x)))
             possible_indexes.extend(self.get_available_moves_around_1_long_chains())
         possible_indexes = list(filter(lambda item: item is not None, possible_indexes))
-        return self.drop_duplicates(possible_indexes)
+        possible_indexes = self.drop_duplicates(possible_indexes)
+        if len(possible_indexes) > 5:
+            return random.sample(possible_indexes, 5)
+        else:
+            return possible_indexes
 
     def heuristic(self, node):
         """
@@ -85,18 +91,18 @@ class Bot:
         # collect points for open 4 rows
         node_value += len(self.get_all_open_chains(4, False)) * 16
         node_value += self.four_o_count * 16
-        node_value -= len(self.get_all_open_chains(4, True)) * 16
-        node_value -= self.three_x_count * 16
+        node_value -= len(self.get_all_open_chains(4, True)) * 32
+        node_value -= self.three_x_count * 32
         # collect points for all 4
         node_value += len(list(
             filter(lambda item: item is not None, self.get_all_chain_edge_indexes(4, False)))) * 8
         node_value += self.three_o_count * 8
         node_value -= len(list(
-            filter(lambda item: item is not None, self.get_all_chain_edge_indexes(4, True)))) * 8
-        node_value -= self.four_x_count * 8
+            filter(lambda item: item is not None, self.get_all_chain_edge_indexes(4, True)))) * 16
+        node_value -= self.four_x_count * 16
         # collect points for 3 emp-emp
         node_value += len(self.get_all_open_chains(3, False)) * 4
-        node_value -= len(self.get_all_open_chains(3, True)) * 4
+        node_value -= len(self.get_all_open_chains(3, True)) * 8
         node_value += len(list(filter(lambda item: item is not None, self.get_all_open_chains(2, False)))) * 2
         return node_value
 
@@ -112,7 +118,7 @@ class Bot:
                     return float('+inf')
                 else:
                     return float('-inf')
-            elif depth == 5:
+            elif depth == 7:
                 return node.bot.heuristic(node)
 
         if is_maximizing_player:
@@ -531,7 +537,7 @@ class Bot:
             positive_closing_move = self.board.calculate_position_from_index(positive_closing_index)
             if self.board.is_position_valid_from_pos(negative_closing_move[0], negative_closing_move[1]):
                 indexes.add(negative_closing_index)
-            if self.board.is_position_valid_from_pos(positive_closing_move[0], positive_closing_move[1]):
+            elif self.board.is_position_valid_from_pos(positive_closing_move[0], positive_closing_move[1]):
                 indexes.add(positive_closing_index)
         return indexes
 
