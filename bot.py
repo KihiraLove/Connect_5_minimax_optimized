@@ -204,8 +204,7 @@ class Bot:
                 continue
             if len(index_chain) == 1:
                 # delete 1 long chain if blocked from all sides
-                neighbours_of_neighbour = self.board.calculate_true_neighbouring_indexes(
-                    neighbour)  # all possible neighbours of neighbour
+                neighbours_of_neighbour = self.board.calculate_true_neighbouring_indexes(neighbour)  # all possible neighbours of neighbour
                 neighbour_count = len(neighbours_of_neighbour)
                 if neighbour_count == len(self.board.o_indexes.intersection(
                         neighbours_of_neighbour) if is_opponent_x else self.board.x_indexes.intersection(
@@ -216,10 +215,19 @@ class Bot:
             chain_direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - chain_direction
             positive_closing_index = chain[-1] + chain_direction
-            negative_closing_pos = self.board.calculate_position_from_index(negative_closing_index)
-            positive_closing_pos = self.board.calculate_position_from_index(positive_closing_index)
-            if (not self.board.is_position_valid_from_pos(negative_closing_pos[0], negative_closing_pos[1]) and
-                    not self.board.is_position_valid_from_pos(positive_closing_pos[0], positive_closing_pos[1])):
+
+            if negative_closing_index != index and positive_closing_index != index:
+                continue
+
+            negative_match = negative_closing_index == index
+            positive_match = positive_closing_index == index
+            negative_in_chain = negative_closing_index in self.board.x_indexes if not is_opponent_x else self.board.o_indexes
+            positive_in_chain = positive_closing_index in self.board.x_indexes if not is_opponent_x else self.board.o_indexes
+            blocked_by_edge = self.is_chain_blocked_by_edge(chain_direction, chain[0], chain[-1])
+            positive_closing = positive_in_chain or blocked_by_edge
+            negative_closing = negative_in_chain or blocked_by_edge
+
+            if (negative_match and positive_closing) or (positive_match and negative_closing):
                 deletable_indexes.append(i)
 
         if len(deletable_indexes) > 0:
