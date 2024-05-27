@@ -33,6 +33,23 @@ class Board:
             new_indexes.add(new_index)
         return new_indexes
 
+    def get_all_possible_moves_in_range(self, move_range=1):
+        if move_range > 2 or move_range < 1:
+            raise RuntimeError
+        all_moves = {}
+        for index in self.x_indexes:
+            all_moves = all_moves.union(self.calculate_true_neighbouring_indexes(index))
+        for index in self.o_indexes:
+            all_moves = all_moves.union(self.calculate_true_neighbouring_indexes(index))
+        if move_range == 1:
+            all_moves = (all_moves - self.x_indexes) - self.o_indexes
+            return all_moves
+        working_set = all_moves.copy()
+        for index in all_moves:
+            working_set = working_set.union(self.calculate_true_neighbouring_indexes(index))
+        working_set = (working_set - self.x_indexes) - self.o_indexes
+        return working_set
+
     def calculate_index_from_position(self, x, y):
         """
         Calculates the index of the move from board position
@@ -79,7 +96,7 @@ class Board:
         self.add_index(self.calculate_index_from_position(x, y), is_player_x)
         return is_enlarged
 
-    def is_position_valid(self, x, y):
+    def is_position_valid_from_pos(self, x, y):
         """
         Checks if the move is valid
         :param x: row number
@@ -262,7 +279,7 @@ class Board:
         :return: is_win, is_enlarged: boolean indicating if the move won the game,
                                      and boolean indicating if the board was enlarged by the move or not
         """
-        if not self.is_position_valid(x, y):
+        if not self.is_position_valid_from_pos(x, y):
             raise IndexError
         is_enlarged = self.set_position(x, y, is_player_x)
         is_win = self.check_for_win(x, y, is_player_x)
