@@ -88,21 +88,21 @@ class Bot:
         """
         self.board = node.get_board()
         node_value = 0
-        # collect points for open 4 rows
+        # collect points for all 4 chains
         node_value += len(self.get_all_open_chains(4, False)) * 16
         node_value += self.four_o_count * 16
         node_value -= len(self.get_all_open_chains(4, True)) * 32
-        node_value -= self.three_x_count * 32
-        # collect points for all 4
-        node_value += len(list(
-            filter(lambda item: item is not None, self.get_all_chain_edge_indexes(4, False)))) * 8
-        node_value += self.three_o_count * 8
-        node_value -= len(list(
-            filter(lambda item: item is not None, self.get_all_chain_edge_indexes(4, True)))) * 16
         node_value -= self.four_x_count * 16
         # collect points for 3 emp-emp
-        node_value += len(self.get_all_open_chains(3, False)) * 4
-        node_value -= len(self.get_all_open_chains(3, True)) * 8
+        node_value += len(self.find_double_open_3_chains(False)) * 8
+        node_value -= len(self.find_double_open_3_chains(True)) * 16
+        # collect points for all 3 chains
+        node_value += len(list(
+            filter(lambda item: item is not None, self.get_all_chain_edge_indexes(3, False)))) * 4
+        node_value += self.three_o_count * 4
+        node_value -= len(list(
+            filter(lambda item: item is not None, self.get_all_chain_edge_indexes(3, True)))) * 8
+        node_value -= self.three_x_count * 4
         node_value += len(list(filter(lambda item: item is not None, self.get_all_open_chains(2, False)))) * 2
         return node_value
 
@@ -388,9 +388,7 @@ class Bot:
         # this treats the symptom but the root cause is still there
         new_changed_chains = []
         for i in range(0, len(changed_chains) - 1):
-            if changed_chains[i][0] >= len(self.x_index_chains if is_player_x else self.o_index_chains):
-                pass
-            else:
+            if changed_chains[i][0] < len(self.x_index_chains if is_player_x else self.o_index_chains):
                 new_changed_chains.append(changed_chains[i])
         changed_chains = copy.deepcopy(new_changed_chains)
         # deep copy to help debugging if needed
