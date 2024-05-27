@@ -387,7 +387,7 @@ class Bot:
         removable_chains = []
         # this treats the symptom but the root cause is still there
         new_changed_chains = []
-        for i in range(0, len(changed_chains) - 1):
+        for i in range(0, len(changed_chains)):
             if changed_chains[i][0] < len(self.x_index_chains if is_player_x else self.o_index_chains):
                 new_changed_chains.append(changed_chains[i])
         changed_chains = copy.deepcopy(new_changed_chains)
@@ -400,7 +400,6 @@ class Bot:
                     if self.merge_chains(chain_index, index, is_player_x):
                         removable_chains.append(chain_index)
                     removable_chains.append(index)
-        removable_chains = self.drop_duplicates(removable_chains)
         self.delete_chain_by_index(removable_chains, is_player_x)
 
     def merge_chains(self, index_to_merge_to, index_to_merge, is_player_x):
@@ -455,7 +454,9 @@ class Bot:
         :param is_player_x: boolean indicating whether the player is X or not
         """
         # Reverse sort the indexes, so we don't have to shift them
-        indexes = sorted(indexes, reverse=True)
+        # turning it into a set removes duplicates
+        # sorted function turns it into a list
+        indexes = sorted(set(indexes), reverse=True)
         for index in indexes:
             if is_player_x:
                 del self.x_index_chains[index]
@@ -569,8 +570,7 @@ class Bot:
         return list(moves)
 
     def check_for_4_move(self, is_player_x):
-        # this has been modified with high hopes
-        # find the old original function below this function
+        # I'm a very optimistic function, I assume that there are no bugs are happening before running me
         """
         Check if the bot has a 4 long chain to win
         or check if the opponent has a 4 long chain that the bot has to block
@@ -593,9 +593,14 @@ class Bot:
                     return negative_closing_move
                 elif self.board.is_position_valid_from_pos(positive_closing_move[0], positive_closing_move[1]):
                     return positive_closing_move
+            else:
+                if direction == 1 or direction == self.board.size or direction == self.board.size + 1 or (direction == self.board.size - 1 and self.is_index_in_row1(negative_closing_index)):
+                    return positive_closing_move
+                else:
+                    return negative_closing_move
         return None
 
-    #TODO this is the old function as it was
+    # TODO: this is the old function as it was
     def check_for_4_move_old(self, is_player_x):
         """
                 Check if the bot has a 4 long chain to win
