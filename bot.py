@@ -62,13 +62,14 @@ class Bot:
         else:
             possible_indexes.pop(0)
         # consider open 3
-        possible_indexes.extend(list(self.get_all_chain_edge_indexes(3, is_player_x)))
+        possible_indexes.extend(list(self.find_double_open_3_chains(is_player_x)))
         # consider open 3
         if len(possible_indexes) == 0:
-            possible_indexes.extend(list(self.get_all_chain_edge_indexes(3, not is_player_x)))
+            possible_indexes.extend(list(self.find_double_open_3_chains(not is_player_x)))
         # consider every other possible moves
         if len(possible_indexes) == 0:
             possible_indexes.extend(list(self.get_all_chain_edge_indexes(2, is_player_x)))
+            possible_indexes.extend(list(self.get_all_chain_edge_indexes(2, not is_player_x)))
             possible_indexes.extend(self.get_available_moves_around_1_long_chains())
         possible_indexes = list(filter(lambda item: item is not None, possible_indexes))
         return self.drop_duplicates(possible_indexes)
@@ -111,7 +112,7 @@ class Bot:
                     return float('+inf')
                 else:
                     return float('-inf')
-            elif depth == 7:
+            elif depth == 5:
                 return node.bot.heuristic(node)
 
         if is_maximizing_player:
@@ -209,18 +210,10 @@ class Bot:
             chain_direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
             negative_closing_index = chain[0] - chain_direction
             positive_closing_index = chain[-1] + chain_direction
-            if negative_closing_index != index and positive_closing_index != index:
-                continue
-
-            negative_match = negative_closing_index == index
-            positive_match = positive_closing_index == index
-            negative_in_chain = negative_closing_index in self.board.x_indexes if not is_opponent_x else self.board.o_indexes
-            positive_in_chain = positive_closing_index in self.board.x_indexes if not is_opponent_x else self.board.o_indexes
-            blocked_by_edge = self.is_chain_blocked_by_edge(chain_direction, chain[0], chain[-1])
-            positive_closing = positive_in_chain or blocked_by_edge
-            negative_closing = negative_in_chain or blocked_by_edge
-
-            if (negative_match and positive_closing) or (positive_match and negative_closing):
+            negative_closing_pos = self.board.calculate_position_from_index(negative_closing_index)
+            positive_closing_pos = self.board.calculate_position_from_index(positive_closing_index)
+            if (not self.board.is_position_valid_from_pos(negative_closing_pos[0], negative_closing_pos[1]) and
+                    not self.board.is_position_valid_from_pos(positive_closing_pos[0], positive_closing_pos[1])):
                 deletable_indexes.append(i)
 
         if len(deletable_indexes) > 0:
@@ -499,6 +492,27 @@ class Bot:
                     indexes.add(i)
         return indexes
 
+    def find_double_open_3_chains(self, is_player_x):
+        """
+        Checks if there is a chain with 3 length for the player, open from both sides
+        :param is_player_x: indicating whether the player is X or not
+        :return: returns all the moves around them
+        """
+        indexes_of_chains = self.get_all_open_chains(3, is_player_x)
+        indexes = set()
+        for index in indexes_of_chains:
+            chain = sorted(self.x_index_chains[index] if is_player_x else self.o_index_chains[index])
+            direction = self.calculate_direction_of_neighbours(chain[0], chain[1])
+            negative_closing_index = chain[0] - direction
+            positive_closing_index = chain[-1] + direction
+            negative_closing_move = self.board.calculate_position_from_index(negative_closing_index)
+            positive_closing_move = self.board.calculate_position_from_index(positive_closing_index)
+            if (self.board.is_position_valid_from_pos(negative_closing_move[0], negative_closing_move[1]) and
+                    self.board.is_position_valid_from_pos(positive_closing_move[0], positive_closing_move[1])):
+                indexes.add(negative_closing_index)
+                indexes.add(positive_closing_index)
+        return indexes
+
     def get_all_chain_edge_indexes(self, lenght, is_player_x):
         """
         Checks is there is a chain with desired length for the
@@ -559,10 +573,12 @@ class Bot:
             positive_closing_index = chain[-1] + direction
             negative_closing_move = self.board.calculate_position_from_index(negative_closing_index)
             positive_closing_move = self.board.calculate_position_from_index(positive_closing_index)
-            if self.board.is_position_valid_from_pos(negative_closing_move[0], negative_closing_move[1]):
-                return negative_closing_move
-            elif self.board.is_position_valid_from_pos(positive_closing_move[0], positive_closing_move[1]):
-                return positive_closing_move
+            blocked_by_edge = self.is_chain_blocked_by_edge(direction, chain[0], chain[-1])
+            if not blocked_by_edge:
+                if self.board.is_position_valid_from_pos(negative_closing_move[0], negative_closing_move[1]):
+                    return negative_closing_move
+                elif self.board.is_position_valid_from_pos(positive_closing_move[0], positive_closing_move[1]):
+                    return positive_closing_move
         return None
 
     #TODO this is the old function as it was
