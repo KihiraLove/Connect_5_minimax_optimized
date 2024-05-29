@@ -89,13 +89,12 @@ class Bot:
         else:
             return possible_indexes
 
-    def heuristic(self, node):
+    def heuristic(self):
         """
         Heuristic function for finding the heuristic value of a node.
         :param node: The node to find the heuristic value for.
         :return: The heuristic value of a node.
         """
-        self.board = node.get_board()
         node_value = 0
         # collect points for all 4 chains
         node_value += len(self.get_all_open_chains(4, False)) * 16
@@ -128,7 +127,7 @@ class Bot:
                 else:
                     return float('-inf')
             elif depth == 7:
-                return node.bot.heuristic(node)
+                return node.bot.heuristic()
 
         if is_maximizing_player:
             best_val = float('-inf')
