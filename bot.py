@@ -185,13 +185,12 @@ class Bot:
         matches = self.board.get_neighbours(index, is_player_x)
         changed_chains_index_direction = []
         changed_chains_index_direction.clear()
-        if len(self.x_index_chains if is_player_x else self.o_index_chains) == 0 or len(matches) == 0:
+        if len(matches) == 0:
             self.add_new_chain({index}, is_player_x)
         else:
             for neighbour in matches:
                 changed_chains_index_direction.extend(self.add_index_to_chain(index, neighbour, is_player_x))
         if len(changed_chains_index_direction) > 1:
-            a = len(changed_chains_index_direction)
             self.check_for_overlap(changed_chains_index_direction, is_player_x)
         opponent = not is_player_x
         opponent_matches = self.board.get_neighbours(index, opponent)
@@ -360,9 +359,11 @@ class Bot:
         direction = self.calculate_direction_of_neighbours(index, neighbour)
         changed_chains_index_direction = []
         chains_to_be_added = []
+        neighbour_is_dead = True
         for i, index_chain in enumerate(self.x_index_chains) if is_player_x else enumerate(self.o_index_chains):
             if neighbour not in index_chain:
                 continue
+            neighbour_is_dead = False
             if len(index_chain) == 1:
                 index_chain.add(index)
                 changed_chains_index_direction.append((i, direction))
@@ -375,8 +376,9 @@ class Bot:
             else:
                 # Create a new chain and add it to the list, if we form a new chain
                 # with an index, from all already existing chain
-                chains_to_be_added.append(
-                    ({index, neighbour}, self.calculate_direction_of_neighbours(index, neighbour)))
+                chains_to_be_added.append(({index, neighbour}, self.calculate_direction_of_neighbours(index, neighbour)))
+        if neighbour_is_dead:
+            self.add_new_chain({index, neighbour}, is_player_x)
         index_offset = 0
         for chain, direction in chains_to_be_added:
             chain_index = len(self.x_index_chains if is_player_x else self.o_index_chains) + index_offset
@@ -708,4 +710,7 @@ class Bot:
         head.set_value(self.minimax(head, 0, True, float("-inf"), float("inf")))
         step_tuple = self.board.calculate_position_from_index(self.step)
         self.add_last_move(step_tuple, False)
-        return step_tuple
+        move = input("Enter your move (x y): ").split(' ')
+        x = int(move[0])
+        y = int(move[1])
+        return (x, y)
