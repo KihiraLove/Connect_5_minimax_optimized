@@ -707,7 +707,4 @@ class Bot:
         head.set_value(self.minimax(head, 0, True, float("-inf"), float("inf")))
         step_tuple = self.board.calculate_position_from_index(self.step)
         self.add_last_move(step_tuple, False)
-        move = input("Enter your move (x y): ").split(' ')
-        x = int(move[0])
-        y = int(move[1])
-        return (x, y)
+        return step_tuple
