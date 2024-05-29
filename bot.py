@@ -84,10 +84,7 @@ class Bot:
         possible_indexes = list(filter(lambda item: item is not None, possible_indexes))
         possible_indexes = self.drop_duplicates(possible_indexes)
         possible_indexes = self.drop_invalid_moves(possible_indexes)
-        if len(possible_indexes) > 7:
-            return random.sample(possible_indexes, 7)
-        else:
-            return possible_indexes
+        return possible_indexes
 
     def heuristic(self):
         """
