@@ -96,7 +96,7 @@ class Board:
         self.add_index(self.calculate_index_from_position(x, y), is_player_x)
         return is_enlarged
 
-    def is_position_valid(self, x, y):
+    def is_position_valid_from_pos(self, x, y):
         """
         Checks if the move is valid
         :param x: row number
@@ -279,7 +279,7 @@ class Board:
         :return: is_win, is_enlarged: boolean indicating if the move won the game,
                                      and boolean indicating if the board was enlarged by the move or not
         """
-        if not self.is_position_valid(x, y):
+        if not self.is_position_valid_from_pos(x, y):
             raise IndexError
         is_enlarged = self.set_position(x, y, is_player_x)
         is_win = self.check_for_win(x, y, is_player_x)

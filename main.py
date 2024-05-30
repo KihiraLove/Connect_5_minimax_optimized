@@ -20,5 +20,7 @@ while not win:
             move = bot.smart_move(last_move, enlarged)
             win, enlarged = board.move(move[0], move[1], is_player_x)
         is_player_x = not is_player_x
-    except IndexError:
+    except IndexError as e:
         print("Invalid move")
+
+board.print_board()
