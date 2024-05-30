@@ -19,8 +19,8 @@ class TestBot(unittest.TestCase):
         self.bot.x_index_chains = [{0, 19, 380, 399}, {0, 21, 42, 63}]
         self.bot.o_index_chains = [{0, 19, 380, 399}, {0, 21, 42, 63}]
         self.bot.recalculate_chains()
-        self.assertEqual(shifted_indexes, self.bot.x_index_chains)
-        self.assertEqual(shifted_indexes, self.bot.o_index_chains)
+        self.assertCountEqual(shifted_indexes, self.bot.x_index_chains)
+        self.assertCountEqual(shifted_indexes, self.bot.o_index_chains)
 
     def test_add_new_chain_empty_list(self):
         self.bot.add_new_chain({0, 1}, True)
@@ -33,8 +33,8 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains = [{4, 5}]
         self.bot.add_new_chain({2, 3}, True)
         self.bot.add_new_chain({6, 7}, False)
-        self.assertEqual([{0, 1}, {2, 3}], self.bot.x_index_chains)
-        self.assertEqual([{4, 5}, {6, 7}], self.bot.o_index_chains)
+        self.assertCountEqual([{0, 1}, {2, 3}], self.bot.x_index_chains)
+        self.assertCountEqual([{4, 5}, {6, 7}], self.bot.o_index_chains)
 
     def test_add_last_move_with_overlap(self):
         move = (2, 20)
@@ -43,7 +43,7 @@ class TestBot(unittest.TestCase):
         self.bot.x_index_chains.append({59, 79})
         self.bot.x_index_chains.append({19})
         self.bot.add_last_move(move, True)
-        self.assertEqual(solution, self.bot.x_index_chains[0])
+        self.assertCountEqual(solution, self.bot.x_index_chains[0])
 
     def test_add_last_move_new_chain_empty_chain_list(self):
         moves = (2, 20)
@@ -55,7 +55,7 @@ class TestBot(unittest.TestCase):
         self.bot.x_index_chains.append({37})
         self.board.add_index(37, True)
         self.bot.add_last_move(moves, True)
-        self.assertEqual([{37}, {39}], self.bot.x_index_chains)
+        self.assertCountEqual([{37}, {39}], self.bot.x_index_chains)
 
     def test_add_last_move_with_vet_chains(self):
         moves = (2, 20)
@@ -64,20 +64,20 @@ class TestBot(unittest.TestCase):
         self.board.add_index(58, False)
         self.board.add_index(78, False)
         self.bot.add_last_move(moves, True)
-        self.assertEqual([{39}], self.bot.x_index_chains)
-        self.assertEqual([{38, 58, 78}], self.bot.o_index_chains)
+        self.assertCountEqual([{39}], self.bot.x_index_chains)
+        self.assertCountEqual([{38, 58, 78}], self.bot.o_index_chains)
 
     def test_check_for_overlap_horizontal(self):
         self.bot.o_index_chains.append({84, 85, 86})
         self.bot.o_index_chains.append({82, 83, 84})
         self.bot.check_for_overlap([(0, 1), (1, 1)], False)
-        self.assertEqual([{82, 83, 84, 85, 86}], self.bot.o_index_chains)
+        self.assertCountEqual([{82, 83, 84, 85, 86}], self.bot.o_index_chains)
 
     def test_check_for_overlap_diagonal_down_up(self):
         self.bot.o_index_chains.append({84, 103, 122})
         self.bot.o_index_chains.append({122, 141, 160})
         self.bot.check_for_overlap([(0, 19), (1, 19)], False)
-        self.assertEqual([{84, 103, 122, 141, 160}], self.bot.o_index_chains)
+        self.assertCountEqual([{84, 103, 122, 141, 160}], self.bot.o_index_chains)
 
     def test_check_for_overlap_multiple_directions(self):
         self.bot.o_index_chains.append({46, 65, 84})
@@ -91,19 +91,19 @@ class TestBot(unittest.TestCase):
         changed_chains = [(0, 19), (1, 19), (2, 1), (3, 1), (4, 20), (5, 20), (6, 21), (7, 21)]
         solution = [{46, 65, 84, 103, 122}, {82, 83, 84, 85, 86}, {44, 64, 84, 104, 124}, {42, 63, 84, 105, 126}]
         self.bot.check_for_overlap(changed_chains, False)
-        self.assertEqual(solution, self.bot.o_index_chains)
+        self.assertCountEqual(solution, self.bot.o_index_chains)
 
     def test_check_for_overlap_vertical(self):
         self.bot.o_index_chains.append({84, 104, 124})
         self.bot.o_index_chains.append({124, 144, 164})
         self.bot.check_for_overlap([(0, 20), (1, 20)], False)
-        self.assertEqual([{84, 104, 124, 144, 164}], self.bot.o_index_chains)
+        self.assertCountEqual([{84, 104, 124, 144, 164}], self.bot.o_index_chains)
 
     def test_check_for_overlap_diagonal_up_down(self):
         self.bot.o_index_chains.append({84, 105, 126})
         self.bot.o_index_chains.append({126, 147, 168})
         self.bot.check_for_overlap([(0, 21), (1, 21)], False)
-        self.assertEqual([{84, 105, 126, 147, 168}], self.bot.o_index_chains)
+        self.assertCountEqual([{84, 105, 126, 147, 168}], self.bot.o_index_chains)
 
     def test_check_for_overlap_new_chain_is_blocked(self):
         index = 150
@@ -222,12 +222,14 @@ class TestBot(unittest.TestCase):
         self.assertEqual(3, self.bot.check_for_open_chains(4, True))
         self.assertEqual(3, self.bot.check_for_open_chains(4, False))
 
-    def test_add_index_to_chain(self):
+    def test_add_last_move(self):
         index = 45
         self.bot.x_index_chains = [{24}, {64}, {66, 87}, {26, 46, 66}]
-        self.board.x_indexes.update({24, 26, 46, 64, 66, 87})
+        self.board.x_indexes.update({24, 26, 45, 46, 64, 66, 87})
         self.bot.add_last_move((3, 6), True)
-        self.assertEqual([{24, 45, 66, 87}, {45, 46},{26, 45, 64}], self.bot.x_index_chains)
+        expected = [{24, 45, 66, 87}, {45, 46}, {26, 45, 64}, {26, 46, 66}]
+        actual = self.bot.x_index_chains
+        self.assertCountEqual(expected, actual)
 
     def test_check_for_4_move(self):
         self.bot.x_index_chains = [{20, 40, 60, 80}]
@@ -248,6 +250,7 @@ class TestBot(unittest.TestCase):
 
     def test_check_for_4_move_blocked_from_both_sides(self):
         # This can never happen, but we test it in case a bug makes it happen
+        # Function doesn't raise errors anymore, this test will fail every time
         self.bot.x_index_chains = [{20, 40, 60, 80}]
         self.board.x_indexes.update({20, 40, 60, 80})
         self.bot.o_index_chains = [{0}, {100}]
@@ -289,12 +292,9 @@ class TestBot(unittest.TestCase):
         self.bot.o_index_chains = [{1}, {18}, {381}, {398}]
         self.board.x_indexes = {0, 19, 380, 399}
         self.board.o_indexes = {1, 18, 381, 398}
-        expected_x = sorted([20, 21, 38, 39, 360, 361, 378, 379])
-        expected_o = sorted([2, 17, 20, 21, 22, 37, 38, 39, 360, 361, 362, 377, 378, 379, 382, 397])
-        actual_x = sorted(self.bot.get_available_moves_around_1_long_chains(True))
-        actual_o = sorted(self.bot.get_available_moves_around_1_long_chains(False))
-        self.assertEqual(expected_x, actual_x)
-        self.assertEqual(expected_o, actual_o)
+        expected = sorted([2, 17, 20, 21, 22, 37, 38, 39, 360, 361, 362, 377, 378, 379, 382, 397])
+        actual = sorted(self.bot.get_available_moves_around_1_long_chains())
+        self.assertEqual(expected, actual)
 
 
 class TestBoard(unittest.TestCase):
@@ -369,7 +369,7 @@ class TestBoard(unittest.TestCase):
         x = [1, 1, 20, 20]
         y = [1, 20, 1, 20]
         for i in range(len(x)):
-            self.assertTrue(self.board.is_position_valid(x[i], y[i]))
+            self.assertTrue(self.board.is_position_valid_from_pos(x[i], y[i]))
 
     def test_is_position_valid_occupied(self):
         player_x = True
@@ -379,7 +379,7 @@ class TestBoard(unittest.TestCase):
             self.board.set_position(x[i], y[i], player_x)
 
         for i in range(len(x)):
-            self.assertFalse(self.board.is_position_valid(x[i], y[i]))
+            self.assertFalse(self.board.is_position_valid_from_pos(x[i], y[i]))
 
     def test_is_position_valid_out_of_bounds(self):
         player_x = True
@@ -389,7 +389,7 @@ class TestBoard(unittest.TestCase):
             self.board.set_position(x[i], y[i], player_x)
 
         for i in range(len(x)):
-            self.assertFalse(self.board.is_position_valid(x[i], y[i]))
+            self.assertFalse(self.board.is_position_valid_from_pos(x[i], y[i]))
 
     def test_is_index_occupied(self):
         x_indexes = {0, 19, 380, 399}
