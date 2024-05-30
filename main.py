@@ -21,8 +21,6 @@ while not win:
             win, enlarged = board.move(move[0], move[1], is_player_x)
         is_player_x = not is_player_x
     except IndexError as e:
-        print(move)
-        print(e)
         print("Invalid move")
 
 board.print_board()
